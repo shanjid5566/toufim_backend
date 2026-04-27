@@ -414,9 +414,305 @@
 						}
 					],
 					"description": "Giveaway management endpoints - create, read, update, delete giveaways and manage ticket packages"
+				},
+				{
+					"name": "vouchers",
+					"item": [
+						{
+							"name": "Create Voucher",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"AMBER-FALL-24\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"usageLimit\": 100,\n  \"expirationDate\": \"2026-12-31\",\n  \"status\": \"ACTIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers"
+									]
+								},
+								"description": "Create a new voucher. Default status is ACTIVE. Use status='DRAFT' to save without activating. Returns 409 if a voucher with the same code already exists (user-friendly error: 'A voucher with this code already exists'). discountType: PERCENTAGE (1-100) or FLAT (amount in currency). Usage tracking: usedCount starts at 0 and increments with each order, auto-expires when usedCount reaches usageLimit."
+							},
+							"response": []
+						},
+						{
+							"name": "Validate Voucher",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"AMBER-FALL-24\",\n  \"orderAmount\": 500,\n  \"consume\": false\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers/validate",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers",
+										"validate"
+									]
+								},
+								"description": "Validate a voucher code. Checks: 1) Voucher exists and is ACTIVE, 2) Not expired, 3) Has usage remaining. Returns discount calculation.\\n\\nPARAMETERS:\\n- consume: false (default) = Only validate, don't increment usedCount (for cart preview)\\n- consume: true = Validate AND increment usedCount (for order completion testing)\\n\\nEXAMPLES:\\n1. Cart preview: {consume: false} - shows discount without consuming\\n2. Test order: {consume: true} - increments usedCount and auto-expires when limit reached"
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Vouchers",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers?page=1&limit=10&status=ACTIVE",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number (default: 1)"
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Items per page (default: 10)"
+										},
+										{
+											"key": "status",
+											"value": "ACTIVE",
+											"description": "Filter by status: DRAFT, ACTIVE, or EXPIRED (optional)"
+										}
+									]
+								},
+								"description": "Get paginated list of vouchers. Returns code, discount details, usage stats, and status. Use status query parameter to filter (DRAFT, ACTIVE, EXPIRED). Remove status to get all."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Voucher By ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers/:voucherId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers",
+										":voucherId"
+									],
+									"variable": [
+										{
+											"key": "voucherId",
+											"value": "",
+											"description": "Voucher UUID"
+										}
+									]
+								},
+								"description": "Get a single voucher by ID with detailed usage information including all orders that used this voucher."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Voucher",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"usageLimit\": 200,\n  \"expirationDate\": \"2027-01-31\",\n  \"status\": \"ACTIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers/:voucherId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers",
+										":voucherId"
+									],
+									"variable": [
+										{
+											"key": "voucherId",
+											"value": "",
+											"description": "Voucher UUID"
+										}
+									]
+								},
+								"description": "Update voucher details. All fields are optional. Can update code, discountType, discountValue, usageLimit, expirationDate, and status. Returns 409 if trying to activate with a code that's already active."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Voucher",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers/:voucherId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers",
+										":voucherId"
+									],
+									"variable": [
+										{
+											"key": "voucherId",
+											"value": "",
+											"description": "Voucher UUID"
+										}
+									]
+								},
+								"description": "Delete a voucher. Only allowed if the voucher has not been used in any orders. If voucher has been used, mark it as EXPIRED instead."
+							},
+							"response": []
+						}
+					],
+					"description": "Voucher management endpoints - create, read, update, delete discount vouchers with draft support"
 				}
 			],
-			"description": "Admin-only endpoints for managing authentication and giveaways"
+			"description": "Admin-only endpoints for managing authentication, giveaways, and vouchers"
+		},
+		{
+			"name": "Public",
+			"item": [
+				{
+					"name": "Vouchers",
+					"item": [
+						{
+							"name": "Validate Voucher",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"AMBER-FALL-24\",\n  \"orderAmount\": 500\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/vouchers/validate",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"vouchers",
+										"validate"
+									]
+								},
+								"description": "Validate a voucher code (PUBLIC - No authentication required).\\n\\nCHECKS:\\n1. Voucher exists and is ACTIVE\\n2. Not expired (expirationDate)\\n3. Has remaining uses (usedCount < usageLimit)\\n\\nRETURNS:\\n- voucherCode (send this CODE when creating order, not an ID)\\n- Discount calculation\\n- Final amount after discount\\n- Remaining uses\\n\\nIMPORTANT:\\n✅ This endpoint only PREVIEWS the discount\\n❌ Does NOT consume the voucher (usedCount stays the same)\\n\\nVOUCHER CONSUMPTION:\\nHappens automatically server-side when:\\n1. Customer completes payment\\n2. Frontend sends voucherCode (not ID) to order endpoint\\n3. Backend validates, creates order, and consumes voucher automatically\\n\\nNo need to call this API again after payment!"
+							},
+							"response": []
+						}
+					],
+					"description": "Public voucher endpoints - no authentication required"
+				}
+			],
+			"description": "Public endpoints accessible to all users without authentication"
 		}
 	],
 	"variable": [
