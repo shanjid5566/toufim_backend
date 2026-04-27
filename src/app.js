@@ -5,6 +5,7 @@ const path = require("path");
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
 const adminGiveawayRoutes = require("./routes/adminGiveawayRoutes");
 const adminVoucherRoutes = require("./routes/adminVoucherRoutes");
+const adminServiceRoutes = require("./routes/adminServiceRoutes");
 const publicVoucherRoutes = require("./routes/publicVoucherRoutes");
 
 // Initialize Express app
@@ -47,6 +48,9 @@ app.use("/api/admin/giveaways", adminGiveawayRoutes);
 
 // Admin Voucher routes (protected: requires JWT token)
 app.use("/api/admin/vouchers", adminVoucherRoutes);
+
+// Admin Service routes (protected: requires JWT token)
+app.use("/api/admin/services", adminServiceRoutes);
 
 // 404 handler - catch all undefined routes
 app.use((req, res) => {

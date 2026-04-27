@@ -666,9 +666,339 @@
 						}
 					],
 					"description": "Voucher management endpoints - create, read, update, delete discount vouchers with draft support"
+				},
+				{
+					"name": "services",
+					"item": [
+						{
+							"name": "Create Service",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Master Suite Remodel",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Detailed structural breakdown and workflow expectations...",
+											"type": "text"
+										},
+										{
+											"key": "basePrice",
+											"value": "0.00",
+											"type": "text"
+										},
+										{
+											"key": "category",
+											"value": "Dakdekkersdiensten",
+											"type": "text"
+										},
+										{
+											"key": "status",
+											"value": "LIVE",
+											"type": "text"
+										},
+										{
+											"key": "bannerImage",
+											"type": "file",
+											"src": []
+										},
+										{
+											"key": "galleryImages",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/services",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services"
+									]
+								},
+"description": "Create a new service using form-data.\n\nFORM-DATA FIELDS (Nederlands):\n• name (text) - Service naam\n• description (text) - Gedetailleerde beschrijving\n• basePrice (text) - Basisprijs in EUR (bijv. '0.00')\n• category (text) - Categorie (Nederlands). Kies een van:\n  - Loodgietersdiensten\n  - Dakdekkersdiensten\n  - Stukadoorsdienst\n  - Elektrische diensten\n  - Tegelservices\n  - Complete vloeroplossingen op één plek\n  - Schoonmaakdiensten\n  - Algemene service\n• status (text) - 'LIVE' of 'MAINTENANCE' (standaard: LIVE)\n• bannerImage (file) - Banner afbeelding (optioneel, max 5MB)\n• galleryImages (files) - Galerij afbeeldingen (optioneel, max 10, elk 5MB)\n\nRESPONSE:\n✅ 201 - Service succesvol aangemaakt\n❌ 400 - Validatiefout\n\nOPMERKING: Slug wordt automatisch gegenereerd"
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Services",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/services?page=1&limit=10&status=LIVE",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number (default: 1)"
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Items per page (default: 10)"
+										},
+										{
+											"key": "category",
+											"value": "Dakdekkersdiensten",
+											"description": "Filter op categorie (optioneel, Nederlands)",
+											"disabled": true
+										},
+										{
+											"key": "status",
+											"value": "LIVE",
+											"description": "Filter by status: LIVE or MAINTENANCE (optional)"
+										}
+									]
+								},
+"description": "Get paginated list of services.\n\nQUERY PARAMETERS:\n• page (number) - Paginanummer (standaard: 1)\n• limit (number) - Items per pagina (standaard: 10)\n• category (string) - Filter op categorie (optioneel, Nederlands naam)\n• status (string) - Filter op status: LIVE of MAINTENANCE (optioneel)\n\nRETURNS:\n• services: Array van service objecten (category in Nederlands)\n• pagination: { page, limit, total, totalPages }\n\nElke service bevat: id, name, slug, description, basePrice, category (Nederlands), bannerImage, galleryImages[], status, createdAt, updatedAt"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Service By ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/:serviceId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services",
+										":serviceId"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "",
+											"description": "Service UUID"
+										}
+									]
+								},
+"description": "Get a single service by ID with complete details.\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRETURNS:\n• Compleet service object met alle velden\n• Category in Nederlands (bijv. 'Dakdekkersdiensten')\n• Banner afbeelding URL\n• Galerij afbeeldingen array\n\nRESPONSE:\n✅ 200 - Service details\n❌ 404 - Service niet gevonden"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Service",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Updated Service Name",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "description",
+											"value": "Updated description",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "basePrice",
+											"value": "150.00",
+											"type": "text"
+										},
+										{
+											"key": "status",
+											"value": "LIVE",
+											"type": "text"
+										},
+										{
+											"key": "bannerImage",
+											"type": "file",
+											"src": [],
+											"disabled": true
+										},
+										{
+											"key": "galleryImages",
+											"type": "file",
+											"src": [],
+											"disabled": true
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/:serviceId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services",
+										":serviceId"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "",
+											"description": "Service UUID"
+										}
+									]
+								},
+"description": "Update service details using form-data. All fields are optional.\n\nFORM-DATA FIELDS (alle optioneel):\n• name (text) - Wijzig service naam (slug wordt opnieuw gegenereerd)\n• description (text) - Wijzig beschrijving\n• basePrice (text) - Wijzig basisprijs\n• category (text) - Wijzig categorie (Nederlands naam)\n• status (text) - 'LIVE' of 'MAINTENANCE'\n• bannerImage (file) - Vervang banner afbeelding\n• galleryImages (files) - Voeg galerij afbeeldingen toe (voegt toe aan bestaande)\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRESPONSE:\n✅ 200 - Service succesvol bijgewerkt\n❌ 404 - Service niet gevonden\n❌ 400 - Validatiefout\n\nOPMERKING: Stuur alleen de velden die u wilt wijzigen. Galerij afbeeldingen worden toegevoegd, niet vervangen."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Service",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/:serviceId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services",
+										":serviceId"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "",
+											"description": "Service UUID"
+										}
+									]
+								},
+"description": "Delete a service permanently.\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRESPONSE:\n✅ 200 - Service succesvol verwijderd\n❌ 404 - Service niet gevonden\n\nWAARSCHUWING: Deze actie is onomkeerbaar. Overweeg de status op MAINTENANCE te zetten in plaats van verwijderen."
+							},
+							"response": []
+						},
+						{
+							"name": "Remove Gallery Images",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"imageUrls\": [\n    \"/uploads/giveaway-1234567890-123456789.jpg\",\n    \"/uploads/giveaway-0987654321-987654321.jpg\"\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/:serviceId/gallery",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"services",
+										":serviceId",
+										"gallery"
+									],
+									"variable": [
+										{
+											"key": "serviceId",
+											"value": "",
+											"description": "Service UUID"
+										}
+									]
+								},
+								"description": "Remove specific images from service gallery.\n\nREQUEST BODY (Raw JSON):\n{\n  \"imageUrls\": [\"url1\", \"url2\"]\n}\n\nFIELDS:\n• imageUrls (array) - Array of image URLs to remove (must match exactly)\n\nURL PARAMETERS:\n:serviceId - UUID of the service\n\nRESPONSE:\n✅ 200 - Gallery images removed successfully\n❌ 404 - Service not found\n❌ 400 - Invalid imageUrls format\n\nনোট: Banner image মুছতে এই endpoint ব্যবহার করবেন না। Update endpoint দিয়ে নতুন banner আপলোড করুন।"
+							},
+							"response": []
+						}
+					],
+					"description": "Service management endpoints - create, read, update, delete services with banner and gallery images"
 				}
 			],
-			"description": "Admin-only endpoints for managing authentication, giveaways, and vouchers"
+			"description": "Admin-only endpoints for managing authentication, giveaways, vouchers, and services"
 		},
 		{
 			"name": "Public",

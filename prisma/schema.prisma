@@ -36,22 +36,34 @@ model Admin {
 }
 
 // Service model
+enum ServiceCategory {
+  PLUMBING_SERVICES
+  ROOFING_SERVICES
+  PLASTERING_SERVICE
+  ELECTRICAL_SERVICES
+  TILING_SERVICES
+  COMPLETE_FLOORING_SOLUTIONS
+  CLEANING_SERVICES
+  OVERALL_SERVICE
+}
+
 enum ServiceStatus {
   LIVE
   MAINTENANCE
 }
 
 model Service {
-  id          String        @id @default(uuid())
-  title       String
-  slug        String        @unique
-  description String        @db.Text
-  basePrice   Decimal       @db.Decimal(10, 2)
-  category    String
-  images      String[]
-  status      ServiceStatus @default(LIVE)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            String          @id @default(uuid())
+  name          String
+  slug          String          @unique
+  description   String          @db.Text
+  basePrice     Decimal         @db.Decimal(10, 2)
+  category      ServiceCategory
+  bannerImage   String?
+  galleryImages String[]
+  status        ServiceStatus   @default(LIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 // Order Lead model
