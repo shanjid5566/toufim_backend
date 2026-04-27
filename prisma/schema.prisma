@@ -48,8 +48,9 @@ enum ServiceCategory {
 }
 
 enum ServiceStatus {
-  LIVE
-  MAINTENANCE
+  ACTIVE
+  COMPLETED
+  DRAFT
 }
 
 model Service {
@@ -61,7 +62,7 @@ model Service {
   category      ServiceCategory
   bannerImage   String?
   galleryImages String[]
-  status        ServiceStatus   @default(LIVE)
+  status        ServiceStatus   @default(ACTIVE)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }

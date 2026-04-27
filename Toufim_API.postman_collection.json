@@ -691,37 +691,44 @@
 										{
 											"key": "name",
 											"value": "Master Suite Remodel",
-											"type": "text"
+											"type": "text",
+											"description": "Service name (required)"
 										},
 										{
 											"key": "description",
 											"value": "Detailed structural breakdown and workflow expectations...",
-											"type": "text"
+											"type": "text",
+											"description": "Detailed description (required)"
 										},
 										{
 											"key": "basePrice",
 											"value": "0.00",
-											"type": "text"
+											"type": "text",
+											"description": "Base price in EUR (required, e.g. 0.00 for free estimates)"
 										},
 										{
 											"key": "category",
 											"value": "Dakdekkersdiensten",
-											"type": "text"
+											"type": "text",
+											"description": "Category in Dutch - see docs for valid values (required)"
 										},
 										{
 											"key": "status",
-											"value": "LIVE",
-											"type": "text"
+											"value": "ACTIVE",
+											"type": "text",
+											"description": "ACTIVE, COMPLETED, or DRAFT (optional, default: ACTIVE)"
 										},
 										{
 											"key": "bannerImage",
 											"type": "file",
-											"src": []
+											"src": [],
+											"description": "Banner image - 1 file, max 5MB (optional)"
 										},
 										{
 											"key": "galleryImages",
 											"type": "file",
-											"src": []
+											"src": [],
+											"description": "Gallery images - max 10 files, 5MB each (optional)"
 										}
 									]
 								},
@@ -736,7 +743,7 @@
 										"services"
 									]
 								},
-"description": "Create a new service using form-data.\n\nFORM-DATA FIELDS (Nederlands):\n• name (text) - Service naam\n• description (text) - Gedetailleerde beschrijving\n• basePrice (text) - Basisprijs in EUR (bijv. '0.00')\n• category (text) - Categorie (Nederlands). Kies een van:\n  - Loodgietersdiensten\n  - Dakdekkersdiensten\n  - Stukadoorsdienst\n  - Elektrische diensten\n  - Tegelservices\n  - Complete vloeroplossingen op één plek\n  - Schoonmaakdiensten\n  - Algemene service\n• status (text) - 'LIVE' of 'MAINTENANCE' (standaard: LIVE)\n• bannerImage (file) - Banner afbeelding (optioneel, max 5MB)\n• galleryImages (files) - Galerij afbeeldingen (optioneel, max 10, elk 5MB)\n\nRESPONSE:\n✅ 201 - Service succesvol aangemaakt\n❌ 400 - Validatiefout\n\nOPMERKING: Slug wordt automatisch gegenereerd"
+"description": "Create a new service using form-data.\n\nFORM-DATA FIELDS:\n• name (text) - Service name\n• description (text) - Detailed description\n• basePrice (text) - Base price in EUR (e.g., '0.00')\n• category (text) - Category in Dutch. Valid values:\n  - Loodgietersdiensten\n  - Dakdekkersdiensten\n  - Stukadoorsdienst\n  - Elektrische diensten\n  - Tegelservices\n  - Complete vloeroplossingen op één plek\n  - Schoonmaakdiensten\n  - Algemene service\n• status (text) - 'ACTIVE', 'COMPLETED', or 'DRAFT' (default: ACTIVE)\n• bannerImage (file) - Banner image (optional, max 5MB)\n• galleryImages (files) - Gallery images (optional, max 10, 5MB each)\n\nRESPONSE:\n✅ 201 - Service created successfully\n❌ 400 - Validation error\n\nNOTE: Slug is auto-generated from service name"
 							},
 							"response": []
 						},
@@ -784,12 +791,12 @@
 										},
 										{
 											"key": "status",
-											"value": "LIVE",
-											"description": "Filter by status: LIVE or MAINTENANCE (optional)"
+											"value": "ACTIVE",
+											"description": "Filter by status: ACTIVE, COMPLETED, or DRAFT (optional)"
 										}
 									]
 								},
-"description": "Get paginated list of services.\n\nQUERY PARAMETERS:\n• page (number) - Paginanummer (standaard: 1)\n• limit (number) - Items per pagina (standaard: 10)\n• category (string) - Filter op categorie (optioneel, Nederlands naam)\n• status (string) - Filter op status: LIVE of MAINTENANCE (optioneel)\n\nRETURNS:\n• services: Array van service objecten (category in Nederlands)\n• pagination: { page, limit, total, totalPages }\n\nElke service bevat: id, name, slug, description, basePrice, category (Nederlands), bannerImage, galleryImages[], status, createdAt, updatedAt"
+"description": "Get paginated list of services.\n\nQUERY PARAMETERS:\n• page (number) - Page number (default: 1)\n• limit (number) - Items per page (default: 10)\n• category (string) - Filter by category (optional, Dutch name)\n• status (string) - Filter by status: ACTIVE, COMPLETED, or DRAFT (optional)\n\nRETURNS:\n• services: Array of service objects (category in Dutch)\n• pagination: { page, limit, total, totalPages }\n\nEach service includes: id, name, slug, description, basePrice, category (Dutch), bannerImage, galleryImages[], status, createdAt, updatedAt"
 							},
 							"response": []
 						},
@@ -827,7 +834,7 @@
 										}
 									]
 								},
-"description": "Get a single service by ID with complete details.\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRETURNS:\n• Compleet service object met alle velden\n• Category in Nederlands (bijv. 'Dakdekkersdiensten')\n• Banner afbeelding URL\n• Galerij afbeeldingen array\n\nRESPONSE:\n✅ 200 - Service details\n❌ 404 - Service niet gevonden"
+"description": "Get a single service by ID with complete details.\n\nURL PARAMETERS:\n:serviceId - Service UUID\n\nRETURNS:\n• Complete service object with all fields\n• Category in Dutch (e.g., 'Dakdekkersdiensten')\n• Banner image URL\n• Gallery images array\n\nRESPONSE:\n✅ 200 - Service details\n❌ 404 - Service not found"
 							},
 							"response": []
 						},
@@ -853,35 +860,41 @@
 											"key": "name",
 											"value": "Updated Service Name",
 											"type": "text",
-											"disabled": true
+											"disabled": true,
+											"description": "New service name (optional)"
 										},
 										{
 											"key": "description",
 											"value": "Updated description",
 											"type": "text",
-											"disabled": true
+											"disabled": true,
+											"description": "New description (optional)"
 										},
 										{
 											"key": "basePrice",
 											"value": "150.00",
-											"type": "text"
+											"type": "text",
+											"description": "New base price in EUR (optional)"
 										},
 										{
 											"key": "status",
-											"value": "LIVE",
-											"type": "text"
+											"value": "ACTIVE",
+											"type": "text",
+											"description": "ACTIVE, COMPLETED, or DRAFT (optional)"
 										},
 										{
 											"key": "bannerImage",
 											"type": "file",
 											"src": [],
-											"disabled": true
+											"disabled": true,
+											"description": "New banner image - replaces existing (optional)"
 										},
 										{
 											"key": "galleryImages",
 											"type": "file",
 											"src": [],
-											"disabled": true
+											"disabled": true,
+											"description": "Additional gallery images - appends to existing (optional)"
 										}
 									]
 								},
@@ -904,7 +917,7 @@
 										}
 									]
 								},
-"description": "Update service details using form-data. All fields are optional.\n\nFORM-DATA FIELDS (alle optioneel):\n• name (text) - Wijzig service naam (slug wordt opnieuw gegenereerd)\n• description (text) - Wijzig beschrijving\n• basePrice (text) - Wijzig basisprijs\n• category (text) - Wijzig categorie (Nederlands naam)\n• status (text) - 'LIVE' of 'MAINTENANCE'\n• bannerImage (file) - Vervang banner afbeelding\n• galleryImages (files) - Voeg galerij afbeeldingen toe (voegt toe aan bestaande)\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRESPONSE:\n✅ 200 - Service succesvol bijgewerkt\n❌ 404 - Service niet gevonden\n❌ 400 - Validatiefout\n\nOPMERKING: Stuur alleen de velden die u wilt wijzigen. Galerij afbeeldingen worden toegevoegd, niet vervangen."
+"description": "Update service details using form-data. All fields are optional.\n\nFORM-DATA FIELDS (all optional):\n• name (text) - Update service name (slug will auto-regenerate)\n• description (text) - Update description\n• basePrice (text) - Update base price\n• category (text) - Update category (Dutch name)\n• status (text) - 'ACTIVE', 'COMPLETED', or 'DRAFT'\n• bannerImage (file) - Replace banner image\n• galleryImages (files) - Add more gallery images (appends to existing)\n\nURL PARAMETERS:\n:serviceId - Service UUID\n\nRESPONSE:\n✅ 200 - Service updated successfully\n❌ 404 - Service not found\n❌ 400 - Validation error\n\nNOTE: Only send fields you want to change. Gallery images append, not replace."
 							},
 							"response": []
 						},
@@ -942,7 +955,7 @@
 										}
 									]
 								},
-"description": "Delete a service permanently.\n\nURL PARAMETERS:\n:serviceId - UUID van de service\n\nRESPONSE:\n✅ 200 - Service succesvol verwijderd\n❌ 404 - Service niet gevonden\n\nWAARSCHUWING: Deze actie is onomkeerbaar. Overweeg de status op MAINTENANCE te zetten in plaats van verwijderen."
+"description": "Delete a service permanently.\n\nURL PARAMETERS:\n:serviceId - Service UUID\n\nRESPONSE:\n✅ 200 - Service deleted successfully\n❌ 404 - Service not found\n\nWARNING: This action is irreversible. Consider setting status to DRAFT instead of deleting."
 							},
 							"response": []
 						},

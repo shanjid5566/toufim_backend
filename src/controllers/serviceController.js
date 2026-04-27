@@ -15,7 +15,7 @@ const VALID_CATEGORIES = getAllDutchCategories();
 /**
  * Valid service statuses
  */
-const VALID_STATUSES = ["LIVE", "MAINTENANCE"];
+const VALID_STATUSES = ["ACTIVE", "COMPLETED", "DRAFT"];
 
 /**
  * Create a new service
@@ -32,11 +32,6 @@ const VALID_STATUSES = ["LIVE", "MAINTENANCE"];
 const createService = async (req, res) => {
   try {
     const { name, description, basePrice, category, status } = req.body;
-
-    console.log("=== Service Create Request ===");
-    console.log("req.body:", req.body);
-    console.log("req.files:", req.files);
-    console.log("category:", category);
 
     // Validation
     if (!name || !description || !basePrice || !category) {
@@ -86,7 +81,7 @@ const createService = async (req, res) => {
         description,
         basePrice: basePriceNum,
         category: categoryEnum,
-        status: status || "LIVE",
+        status: status || "ACTIVE",
       },
       files
     );
@@ -100,8 +95,6 @@ const createService = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating service:", error);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
 
     res.status(500).json({
       error: "Internal Server Error",
