@@ -62,8 +62,20 @@ const generatePackageTitle = (couponCount) => {
 };
 
 /**
+ * Combine date and time into ISO DateTime string
+ * @param {string} date - Date in YYYY-MM-DD format
+ * @param {string} time - Time in HH:mm format (24-hour)
+ * @returns {Date} Combined DateTime object
+ */
+const combineDateAndTime = (date, time) => {
+  // Combine date and time into ISO format
+  const dateTimeString = `${date}T${time}:00.000Z`;
+  return new Date(dateTimeString);
+};
+
+/**
  * Create a new giveaway with ticket packages
- * @param {object} giveawayData - Giveaway details
+ * @param {object} giveawayData - Giveaway details (includes drawDate and drawTime)
  * @param {array} packages - Array of ticket packages (only couponCount and price)
  * @returns {object} Created giveaway with packages
  */
@@ -77,13 +89,16 @@ const createGiveaway = async (giveawayData, packages) => {
     // Determine base price per ticket from packages
     const basePrice = getBasePricePerTicket(packages);
 
+    // Combine drawDate and drawTime into DateTime
+    const drawDateTime = combineDateAndTime(giveawayData.drawDate, giveawayData.drawTime);
+
     // Create giveaway with packages
     const giveaway = await prisma.giveaway.create({
       data: {
         title: giveawayData.title,
         description: giveawayData.description,
         totalTickets: giveawayData.totalTickets,
-        drawDate: new Date(giveawayData.drawDate),
+        drawDate: drawDateTime,
         bannerImage: giveawayData.bannerImage,
         status: giveawayData.status || "ACTIVE",
         packages: {
@@ -121,21 +136,28 @@ const createGiveaway = async (giveawayData, packages) => {
 /**
  * Update an existing giveaway
  * @param {string} giveawayId - ID of the giveaway to update
- * @param {object} updateData - Data to update
+ * @param {object} updateData - Data to update (can include drawDate and drawTime)
  * @returns {object} Updated giveaway
  */
 const updateGiveaway = async (giveawayId, updateData) => {
   try {
+    // Prepare update data
+    const data = {
+      title: updateData.title,
+      description: updateData.description,
+      totalTickets: updateData.totalTickets,
+      bannerImage: updateData.bannerImage,
+      status: updateData.status,
+    };
+
+    // If both drawDate and drawTime are provided, combine them
+    if (updateData.drawDate && updateData.drawTime) {
+      data.drawDate = combineDateAndTime(updateData.drawDate, updateData.drawTime);
+    }
+
     const giveaway = await prisma.giveaway.update({
       where: { id: giveawayId },
-      data: {
-        title: updateData.title,
-        description: updateData.description,
-        totalTickets: updateData.totalTickets,
-        drawDate: updateData.drawDate ? new Date(updateData.drawDate) : undefined,
-        bannerImage: updateData.bannerImage,
-        status: updateData.status,
-      },
+      data,
       include: {
         packages: true,
       },

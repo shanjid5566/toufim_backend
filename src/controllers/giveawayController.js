@@ -8,7 +8,8 @@ const giveawayService = require("../services/giveawayService");
  *   title: string,
  *   description: string,
  *   totalTickets: number,
- *   drawDate: datetime,
+ *   drawDate: string (YYYY-MM-DD),
+ *   drawTime: string (HH:mm in 24-hour format),
  *   bannerImage: string (optional),
  *   packages: [
  *     {
@@ -20,15 +21,15 @@ const giveawayService = require("../services/giveawayService");
  */
 const createGiveaway = async (req, res) => {
   try {
-    const { title, description, totalTickets, drawDate, bannerImage, packages } =
+    const { title, description, totalTickets, drawDate, drawTime, bannerImage, packages } =
       req.body;
 
     // Validation
-    if (!title || !description || !totalTickets || !drawDate || !packages) {
+    if (!title || !description || !totalTickets || !drawDate || !drawTime || !packages) {
       return res.status(400).json({
         error: "Validation Error",
         message:
-          "Missing required fields: title, description, totalTickets, drawDate, packages",
+          "Missing required fields: title, description, totalTickets, drawDate, drawTime, packages",
       });
     }
 
@@ -69,6 +70,7 @@ const createGiveaway = async (req, res) => {
         description,
         totalTickets,
         drawDate,
+        drawTime,
         bannerImage,
       },
       packages
