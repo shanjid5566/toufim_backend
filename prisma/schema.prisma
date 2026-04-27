@@ -13,6 +13,7 @@ model User {
   id                String  @id @default(uuid())
   fullName          String
   email             String  @unique
+  password          String  // For authentication
   phone             String
   instagramUsername String?
   totalSpent        Decimal @default(0) @db.Decimal(10, 2)

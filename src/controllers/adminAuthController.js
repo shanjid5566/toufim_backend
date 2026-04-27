@@ -1,7 +1,4 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const { PrismaClient } = require("../generated/prisma");
-const prisma = new PrismaClient();
+const adminAuthService = require("../services/adminAuthService");
 
 /**
  * Admin registration (optional - create new admin)
@@ -11,58 +8,17 @@ const prisma = new PrismaClient();
 const register = async (req, res) => {
   try {
     const { email, password, name } = req.body;
-
-    // Validation
-    if (!email || !password || !name) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "Missing required fields: email, password, name",
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "Password must be at least 6 characters long",
-      });
-    }
-
-    // Check if admin already exists
-    const existingAdmin = await prisma.admin.findUnique({
-      where: { email },
-    });
-
-    if (existingAdmin) {
-      return res.status(400).json({
-        error: "Conflict",
-        message: "Admin with this email already exists",
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create admin
-    const admin = await prisma.admin.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
+    const admin = await adminAuthService.registerAdmin(email, password, name);
 
     res.status(201).json({
       message: "Admin registered successfully",
-      data: {
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-      },
+      data: admin,
     });
   } catch (error) {
     console.error("Error registering admin:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
+    const statusCode = error.message.includes("already exists") ? 400 : 500;
+    res.status(statusCode).json({
+      error: statusCode === 400 ? "Validation Error" : "Internal Server Error",
       message: error.message,
     });
   }
@@ -76,63 +32,18 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "Missing required fields: email, password",
-      });
-    }
-
-    // Find admin by email
-    const admin = await prisma.admin.findUnique({
-      where: { email },
-    });
-
-    if (!admin) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid email or password",
-      });
-    }
-
-    // Verify password
-    const passwordMatch = await bcrypt.compare(password, admin.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid email or password",
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-      },
-      process.env.JWT_SECRET || "your-secret-key",
-      {
-        expiresIn: "24h", // Token valid for 24 hours
-      }
-    );
+    const result = await adminAuthService.loginAdmin(email, password);
 
     res.status(200).json({
       message: "Login successful",
-      data: {
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-      },
-      token,
+      data: result.admin,
+      token: result.token,
     });
   } catch (error) {
     console.error("Error logging in:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
+    const statusCode = error.message.includes("Invalid") ? 401 : 500;
+    res.status(statusCode).json({
+      error: statusCode === 401 ? "Unauthorized" : "Internal Server Error",
       message: error.message,
     });
   }
@@ -171,60 +82,30 @@ const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const adminId = req.admin.id;
-
-    // Validation
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "Missing required fields: currentPassword, newPassword",
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "New password must be at least 6 characters long",
-      });
-    }
-
-    // Get admin from database
-    const admin = await prisma.admin.findUnique({
-      where: { id: adminId },
-    });
-
-    // Verify current password
-    const passwordMatch = await bcrypt.compare(currentPassword, admin.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        message: "Current password is incorrect",
-      });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password
-    const updatedAdmin = await prisma.admin.update({
-      where: { id: adminId },
-      data: { password: hashedPassword },
-    });
+    const updatedAdmin = await adminAuthService.changeAdminPassword(
+      adminId,
+      currentPassword,
+      newPassword
+    );
 
     res.status(200).json({
       message: "Password changed successfully",
-      data: {
-        id: updatedAdmin.id,
-        email: updatedAdmin.email,
-        name: updatedAdmin.name,
-      },
+      data: updatedAdmin,
     });
   } catch (error) {
     console.error("Error changing password:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      message: error.message,
-    });
+    const statusCode = error.message.includes("Validation") || error.message.includes("incorrect") ? 400 : 500;
+    if (error.message.includes("incorrect")) {
+      res.status(401).json({
+        error: "Unauthorized",
+        message: error.message,
+      });
+    } else {
+      res.status(statusCode).json({
+        error: statusCode === 400 ? "Validation Error" : "Internal Server Error",
+        message: error.message,
+      });
+    }
   }
 };
 
