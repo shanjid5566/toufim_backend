@@ -1075,6 +1075,96 @@
 						}
 					],
 					"description": "Public giveaway endpoint - no authentication required, returns current ACTIVE giveaway"
+				},
+				{
+					"name": "orders",
+					"item": [
+						{
+							"name": "Create Order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"packageId\": \"\",\n  \"voucherCode\": \"AMBER-FALL-24\",\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+31612345678\",\n  \"instagramUsername\": \"johndoe\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"orders"
+									]
+								},
+								"description": "Create order and get Stripe checkout URL.\n\nREQUEST BODY (Raw JSON):\n{\n  \"packageId\": \"uuid-from-giveaway\",\n  \"voucherCode\": \"AMBER-FALL-24\",  // OPTIONAL\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+31612345678\",\n  \"instagramUsername\": \"johndoe\"  // OPTIONAL\n}\n\nREQUIRED FIELDS:\n• packageId - Get from active giveaway packages\n• fullName - Customer full name\n• email - Customer email\n• phone - Customer phone number\n\nOPTIONAL FIELDS:\n• voucherCode - Promo code for discount\n• instagramUsername - Customer Instagram handle\n\nRETURNS:\n• orderId - Order reference ID\n• sessionId - Stripe session ID\n• paymentUrl - Redirect user to this URL for payment ← IMPORTANT!\n• totalAmount - Final amount after discount\n• originalAmount - Price before discount\n• discountAmount - Amount saved\n\nNEXT STEPS:\n1. Redirect user to paymentUrl\n2. User completes payment on Stripe hosted page\n3. Stripe redirects back to success_url with session_id\n4. Call Confirm Order endpoint with session_id\n\nRESPONSE:\n✅ 201 - Order created, redirect to paymentUrl\n❌ 400 - Invalid package/voucher or not enough tickets\n\nNOTE: Order status is PENDING until payment confirmed"
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"sessionId\": \"cs_test_xxxxxxxxxxxxx\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/confirm",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"orders",
+										"confirm"
+									]
+								},
+								"description": "Confirm payment and complete order. Generates individual coupons.\n\nREQUEST BODY (Raw JSON):\n{\n  \"sessionId\": \"cs_test_xxxxxxxxxxxxx\"\n}\n\nFIELDS:\n• sessionId - From Stripe success_url query parameter\n\nWHEN TO CALL:\nAfter user completes payment on Stripe, they are redirected to:\n`http://localhost:3001/order/success?session_id=cs_test_xxx&order_id=uuid`\n\nExtract session_id from URL and call this endpoint.\n\nWHAT HAPPENS:\n1. Verifies payment with Stripe API\n2. Updates order status to COMPLETED\n3. Generates individual coupons (e.g., 20 coupons for 20-ticket package)\n4. Increments voucher usage (if voucher used)\n5. Increments giveaway ticketsSold\n6. Updates user totalSpent\n\nCOUPON GENERATION:\n• If package has 1 coupon → generates 1 Coupon record\n• If package has 20 coupons → generates 20 Coupon records\n• Each coupon gets unique code: GW-XXXXXX-001, GW-XXXXXX-002, etc.\n• More coupons = more entries in draw = better chance of winning!\n\nRETURNS:\n• Complete order details\n• All generated coupons with unique codes\n• Updated giveaway stats\n\nRESPONSE:\n✅ 200 - Payment confirmed, coupons generated\n❌ 400 - Session not found, already completed, or payment not successful\n\nNOTE: Each coupon is a separate entry in the giveaway draw"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Order By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/orders/:orderId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"orders",
+										":orderId"
+									],
+									"variable": [
+										{
+											"key": "orderId",
+											"value": "",
+											"description": "Order UUID"
+										}
+									]
+								},
+								"description": "Get order details with all coupons.\n\nURL PARAMETERS:\n:orderId - Order UUID\n\nRETURNS:\n• Complete order information\n• Package details\n• Giveaway details\n• Voucher details (if used)\n• User information\n• All generated coupons (if order completed)\n\nUSE CASE:\n• Check order status\n• View purchased coupons\n• Order confirmation page\n• Customer support\n\nRESPONSE:\n✅ 200 - Order details retrieved\n❌ 404 - Order not found"
+							},
+							"response": []
+						}
+					],
+					"description": "Public order endpoints - create orders, process Stripe payments, generate coupons"
 				}
 			],
 			"description": "Public endpoints accessible to all users without authentication"
