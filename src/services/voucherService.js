@@ -64,10 +64,10 @@ const prisma = require("../lib/prisma");
  * @returns {object} Created voucher
  */
 const createVoucher = async (voucherData) => {
-  try {
-    const { code, discountType, discountValue, usageLimit, expirationDate, status } =
-      voucherData;
+  const { code, discountType, discountValue, usageLimit, expirationDate, status } =
+    voucherData;
 
+  try {
     // If publishing as ACTIVE, check if another active voucher with same code exists
     if (status === "ACTIVE") {
       const existingActiveVoucher = await prisma.voucher.findFirst({
@@ -97,7 +97,10 @@ const createVoucher = async (voucherData) => {
 
     return voucher;
   } catch (error) {
-    throw new Error(`Failed to create voucher: ${error.message}`);
+    if (error.code === "P2002") {
+      throw new Error(`A voucher with code "${code}" already exists. Please use a different code.`);
+    }
+    throw error;
   }
 };
 
@@ -234,7 +237,14 @@ const updateVoucher = async (voucherId, updateData) => {
 
     return voucher;
   } catch (error) {
-    throw new Error(`Failed to update voucher: ${error.message}`);
+    if (error.code === "P2002") {
+      const codeValue = updateData.code || "this code";
+      throw new Error(`A voucher with ${codeValue !== "this code" ? `code "${codeValue}"` : codeValue} already exists. Please use a different code.`);
+    }
+    if (error.code === "P2025") {
+      throw new Error("Voucher not found");
+    }
+    throw error;
   }
 };
 
@@ -271,7 +281,10 @@ const deleteVoucher = async (voucherId) => {
 
     return voucher;
   } catch (error) {
-    throw new Error(`Failed to delete voucher: ${error.message}`);
+    if (error.code === "P2025") {
+      throw new Error("Voucher not found");
+    }
+    throw error;
   }
 };
 

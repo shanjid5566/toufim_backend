@@ -432,15 +432,41 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
+								"header": [],
 								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"code\": \"AMBER-FALL-24\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"usageLimit\": 100,\n  \"expirationDate\": \"2026-12-31\",\n  \"status\": \"ACTIVE\"\n}"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "code",
+											"value": "AMBER-FALL-27",
+											"type": "text"
+										},
+										{
+											"key": "discountType",
+											"value": "PERCENTAGE",
+											"type": "text"
+										},
+										{
+											"key": "discountValue",
+											"value": "20",
+											"type": "text"
+										},
+										{
+											"key": "usageLimit",
+											"value": "100",
+											"type": "text"
+										},
+										{
+											"key": "expirationDate",
+											"value": "2026-12-31",
+											"type": "text"
+										},
+										{
+											"key": "status",
+											"value": "DRAFT",
+											"type": "text"
+										}
+									]
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/vouchers",
@@ -453,47 +479,7 @@
 										"vouchers"
 									]
 								},
-								"description": "Create a new voucher. Default status is ACTIVE. Use status='DRAFT' to save without activating. Returns 409 if a voucher with the same code already exists (user-friendly error: 'A voucher with this code already exists'). discountType: PERCENTAGE (1-100) or FLAT (amount in currency). Usage tracking: usedCount starts at 0 and increments with each order, auto-expires when usedCount reaches usageLimit."
-							},
-							"response": []
-						},
-						{
-							"name": "Validate Voucher",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{jwt_token}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"code\": \"AMBER-FALL-24\",\n  \"orderAmount\": 500,\n  \"consume\": false\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/admin/vouchers/validate",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"admin",
-										"vouchers",
-										"validate"
-									]
-								},
-								"description": "Validate a voucher code. Checks: 1) Voucher exists and is ACTIVE, 2) Not expired, 3) Has usage remaining. Returns discount calculation.\\n\\nPARAMETERS:\\n- consume: false (default) = Only validate, don't increment usedCount (for cart preview)\\n- consume: true = Validate AND increment usedCount (for order completion testing)\\n\\nEXAMPLES:\\n1. Cart preview: {consume: false} - shows discount without consuming\\n2. Test order: {consume: true} - increments usedCount and auto-expires when limit reached"
+								"description": "Create a new voucher using form-data.\n\nFORM-DATA FIELDS:\n• code (text) - Unique voucher code (e.g., 'AMBER-FALL-27')\n• discountType (text) - 'PERCENTAGE' or 'FLAT'\n• discountValue (text) - Number: 1-100 for PERCENTAGE, currency amount for FLAT\n• usageLimit (text) - Maximum number of times voucher can be used\n• expirationDate (text) - ISO date format (e.g., '2026-12-31')\n• status (text) - 'DRAFT' or 'ACTIVE' (default: ACTIVE)\n\nRESPONSE:\n✅ 201 - Voucher created successfully\n❌ 409 - Voucher with this code already exists (user-friendly error message)\n❌ 400 - Validation error (e.g., PERCENTAGE > 100)\n\nUSAGE TRACKING:\nusedCount starts at 0 and increments with each order, auto-expires when usedCount >= usageLimit."
 							},
 							"response": []
 						},
@@ -596,15 +582,26 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
+								"header": [],
 								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"usageLimit\": 200,\n  \"expirationDate\": \"2027-01-31\",\n  \"status\": \"ACTIVE\"\n}"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "usageLimit",
+											"value": "200",
+											"type": "text"
+										},
+										{
+											"key": "expirationDate",
+											"value": "2027-01-31",
+											"type": "text"
+										},
+										{
+											"key": "status",
+											"value": "ACTIVE",
+											"type": "text"
+										}
+									]
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/vouchers/:voucherId",
@@ -625,7 +622,7 @@
 										}
 									]
 								},
-								"description": "Update voucher details. All fields are optional. Can update code, discountType, discountValue, usageLimit, expirationDate, and status. Returns 409 if trying to activate with a code that's already active."
+								"description": "Update voucher details using form-data. All fields are optional.\n\nFORM-DATA FIELDS (সব ঐচ্ছিক):\n• code (text) - Update voucher code\n• discountType (text) - 'PERCENTAGE' or 'FLAT'\n• discountValue (text) - Number: 1-100 for PERCENTAGE, currency amount for FLAT\n• usageLimit (text) - Update maximum usage limit\n• expirationDate (text) - Update expiration date (ISO format: '2027-01-31')\n• status (text) - 'DRAFT', 'ACTIVE', or 'EXPIRED'\n\nURL PARAMETERS:\n:voucherId - UUID of the voucher to update\n\nRESPONSE:\n✅ 200 - Voucher updated successfully\n❌ 409 - Voucher with this code already exists (when changing code)\n❌ 404 - Voucher not found\n\nনোট: শুধুমাত্র যে ফিল্ড পরিবর্তন করতে চান সেটি পাঠান। বাকি ফিল্ড আগের মতোই থাকবে।"
 							},
 							"response": []
 						},
@@ -704,7 +701,7 @@
 										"validate"
 									]
 								},
-								"description": "Validate a voucher code (PUBLIC - No authentication required).\\n\\nCHECKS:\\n1. Voucher exists and is ACTIVE\\n2. Not expired (expirationDate)\\n3. Has remaining uses (usedCount < usageLimit)\\n\\nRETURNS:\\n- voucherCode (send this CODE when creating order, not an ID)\\n- Discount calculation\\n- Final amount after discount\\n- Remaining uses\\n\\nIMPORTANT:\\n✅ This endpoint only PREVIEWS the discount\\n❌ Does NOT consume the voucher (usedCount stays the same)\\n\\nVOUCHER CONSUMPTION:\\nHappens automatically server-side when:\\n1. Customer completes payment\\n2. Frontend sends voucherCode (not ID) to order endpoint\\n3. Backend validates, creates order, and consumes voucher automatically\\n\\nNo need to call this API again after payment!"
+								"description": "Validate a voucher code (PUBLIC - No authentication required).\n\nREQUEST BODY (Raw JSON):\n{\n  \"code\": \"AMBER-FALL-27\",\n  \"orderAmount\": 500\n}\n\nFIELDS:\n• code (string) - Voucher code to validate\n• orderAmount (number) - Total order amount before discount\n\nCHECKS:\n1. Voucher exists and is ACTIVE\n2. Not expired (expirationDate > now)\n3. Has remaining uses (usedCount < usageLimit)\n\nRETURNS:\n• voucherCode - Same code (send this when creating order, NOT an ID)\n• discountAmount - Amount of discount\n• finalAmount - Order amount after discount\n• remainingUses - How many uses left\n\nIMPORTANT:\n✅ This endpoint only PREVIEWS the discount\n❌ Does NOT consume the voucher (usedCount stays the same)\n\nVOUCHER CONSUMPTION:\nHappens automatically server-side when:\n1. Customer completes payment\n2. Frontend sends voucherCode (not ID) to order endpoint\n3. Backend validates, creates order, and consumes voucher automatically\n\nNo need to call this API again after payment!"
 							},
 							"response": []
 						}

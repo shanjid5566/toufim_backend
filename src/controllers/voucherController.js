@@ -92,25 +92,16 @@ const createVoucher = async (req, res) => {
   } catch (error) {
     console.error("Error creating voucher:", error);
 
-    // Handle active voucher conflict
-    if (error.message.includes("active voucher") && error.message.includes("already exists")) {
+    if (error.message.includes("already exists")) {
       return res.status(409).json({
         error: "Conflict",
-        message: error.message.replace("Failed to create voucher: ", ""),
-      });
-    }
-
-    // Handle unique constraint violation
-    if (error.code === "P2002") {
-      return res.status(409).json({
-        error: "Conflict",
-        message: "A voucher with this code already exists",
+        message: error.message,
       });
     }
 
     res.status(500).json({
       error: "Internal Server Error",
-      message: error.message,
+      message: "Failed to create voucher. Please try again.",
     });
   }
 };
@@ -273,19 +264,10 @@ const updateVoucher = async (req, res) => {
   } catch (error) {
     console.error("Error updating voucher:", error);
 
-    // Handle active voucher conflict
-    if (error.message.includes("active voucher") && error.message.includes("already exists")) {
+    if (error.message.includes("already exists")) {
       return res.status(409).json({
         error: "Conflict",
-        message: error.message.replace("Failed to update voucher: ", ""),
-      });
-    }
-
-    // Handle unique constraint violation
-    if (error.code === "P2002") {
-      return res.status(409).json({
-        error: "Conflict",
-        message: "A voucher with this code already exists",
+        message: error.message,
       });
     }
 
@@ -298,7 +280,7 @@ const updateVoucher = async (req, res) => {
 
     res.status(500).json({
       error: "Internal Server Error",
-      message: error.message,
+      message: "Failed to update voucher. Please try again.",
     });
   }
 };
@@ -329,13 +311,13 @@ const deleteVoucher = async (req, res) => {
     if (error.message.includes("Cannot delete voucher")) {
       return res.status(400).json({
         error: "Bad Request",
-        message: error.message.replace("Failed to delete voucher: ", ""),
+        message: error.message,
       });
     }
 
     res.status(500).json({
       error: "Internal Server Error",
-      message: error.message,
+      message: "Failed to delete voucher. Please try again.",
     });
   }
 };

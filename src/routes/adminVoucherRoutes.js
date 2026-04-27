@@ -3,6 +3,7 @@ const router = express.Router();
 
 const adminAuthMiddleware = require("../middleware/adminAuth");
 const voucherController = require("../controllers/voucherController");
+const upload = require("../config/multer");
 
 /**
  * Admin Voucher Routes
@@ -17,7 +18,7 @@ router.use(adminAuthMiddleware);
  * Create a new voucher
  * Required admin authentication
  */
-router.post("/", voucherController.createVoucher);
+router.post("/", upload.none(), voucherController.createVoucher);
 
 /**
  * GET /api/admin/vouchers
@@ -39,7 +40,7 @@ router.get("/:voucherId", voucherController.getVoucherById);
  * Update an existing voucher
  * Required admin authentication
  */
-router.put("/:voucherId", voucherController.updateVoucher);
+router.put("/:voucherId", upload.none(), voucherController.updateVoucher);
 
 /**
  * DELETE /api/admin/vouchers/:voucherId
