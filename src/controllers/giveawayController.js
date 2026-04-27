@@ -174,22 +174,46 @@ const getGiveawayById = async (req, res) => {
 /**
  * Update an existing giveaway
  * PUT /api/admin/giveaways/:giveawayId
- * Body: {
+ * Body (multipart/form-data): {
  *   title?: string,
  *   description?: string,
  *   totalTickets?: number,
  *   drawDate?: string (YYYY-MM-DD),
  *   drawTime?: string (HH:mm),
- *   bannerImage?: string,
+ *   bannerImage?: file (optional - multipart/form-data),
  *   status?: "ACTIVE" | "COMPLETED",
- *   packages?: array [{couponCount, price}]
+ *   packages?: JSON string of array [{couponCount, price}]
  * }
  */
 const updateGiveaway = async (req, res) => {
   try {
     const { giveawayId } = req.params;
-    const { title, description, totalTickets, drawDate, drawTime, bannerImage, status, packages } =
+    const { title, description, totalTickets, drawDate, drawTime, status, packages: packagesJson } =
       req.body;
+
+    // Parse packages from JSON string if provided (when using multipart/form-data)
+    let packages = null;
+    if (packagesJson) {
+      try {
+        packages = JSON.parse(packagesJson);
+      } catch (err) {
+        return res.status(400).json({
+          error: "Validation Error",
+          message: "Invalid packages format. Must be valid JSON array.",
+        });
+      }
+    }
+
+    // Parse totalTickets to integer if provided (comes as string from form-data)
+    const totalTicketsNum = totalTickets ? parseInt(totalTickets, 10) : undefined;
+
+    // Validate totalTickets if provided
+    if (totalTickets && (isNaN(totalTicketsNum) || totalTicketsNum <= 0)) {
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "totalTickets must be a positive number",
+      });
+    }
 
     // Validate packages if provided
     if (packages) {
@@ -225,15 +249,23 @@ const updateGiveaway = async (req, res) => {
       }
     }
 
+    // Get uploaded file URL if exists
+    let bannerImageUrl = undefined; // undefined means don't update this field
+    if (req.file) {
+      // Generate full URL: http://localhost:3000/uploads/filename.jpg
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      bannerImageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+    }
+
     const giveaway = await giveawayService.updateGiveaway(
       giveawayId,
       {
         title,
         description,
-        totalTickets,
+        totalTickets: totalTicketsNum,
         drawDate,
         drawTime,
-        bannerImage,
+        bannerImage: bannerImageUrl,
         status,
       },
       packages

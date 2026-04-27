@@ -142,14 +142,14 @@ const createGiveaway = async (giveawayData, packages) => {
  */
 const updateGiveaway = async (giveawayId, updateData, packages = null) => {
   try {
-    // Prepare update data
-    const data = {
-      title: updateData.title,
-      description: updateData.description,
-      totalTickets: updateData.totalTickets,
-      bannerImage: updateData.bannerImage,
-      status: updateData.status,
-    };
+    // Prepare update data (only include fields that are defined)
+    const data = {};
+    
+    if (updateData.title !== undefined) data.title = updateData.title;
+    if (updateData.description !== undefined) data.description = updateData.description;
+    if (updateData.totalTickets !== undefined) data.totalTickets = updateData.totalTickets;
+    if (updateData.bannerImage !== undefined) data.bannerImage = updateData.bannerImage;
+    if (updateData.status !== undefined) data.status = updateData.status;
 
     // If both drawDate and drawTime are provided, combine them
     if (updateData.drawDate && updateData.drawTime) {

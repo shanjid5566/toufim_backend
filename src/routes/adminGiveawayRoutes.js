@@ -40,8 +40,9 @@ router.get("/:giveawayId", giveawayController.getGiveawayById);
  * PUT /api/admin/giveaways/:giveawayId
  * Update an existing giveaway (can include packages to replace all existing packages)
  * Required admin authentication
+ * Accepts multipart/form-data with optional bannerImage file
  */
-router.put("/:giveawayId", giveawayController.updateGiveaway);
+router.put("/:giveawayId", upload.single("bannerImage"), giveawayController.updateGiveaway);
 
 /**
  * DELETE /api/admin/giveaways/:giveawayId

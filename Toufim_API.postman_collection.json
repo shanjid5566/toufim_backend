@@ -298,15 +298,41 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
+								"header": [],
 								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"title\": \"iPhone 15 Pro Max Giveaway - Updated\",\n  \"description\": \"Updated description - Win the latest iPhone 15 Pro Max\",\n  \"drawDate\": \"2026-05-20\",\n  \"drawTime\": \"20:00\",\n  \"packages\": [\n    {\n      \"couponCount\": 50,\n      \"price\": 1200\n    },\n    {\n      \"couponCount\": 100,\n      \"price\": 2000\n    }\n  ]\n}"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "iPhone 15 Pro Max Giveaway - Updated",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Updated description - Win the latest iPhone 15 Pro Max",
+											"type": "text"
+										},
+										{
+											"key": "drawDate",
+											"value": "2026-05-20",
+											"type": "text"
+										},
+										{
+											"key": "drawTime",
+											"value": "20:00",
+											"type": "text"
+										},
+										{
+											"key": "packages",
+											"value": "[{\"couponCount\":1,\"price\":50},{\"couponCount\":5,\"price\":200},{\"couponCount\":10,\"price\":350}]",
+											"type": "text"
+										},
+										{
+											"key": "bannerImage",
+											"type": "file",
+											"src": []
+										}
+									]
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId",
@@ -327,7 +353,7 @@
 										}
 									]
 								},
-								"description": "Update giveaway details. Can update title, description, drawDate, drawTime, and optionally replace all packages."
+								"description": "Update giveaway details. All fields are optional. Can update title, description, totalTickets, drawDate, drawTime, bannerImage (file upload), and packages. If packages are provided, all existing packages will be replaced with the new ones."
 							},
 							"response": []
 						},
