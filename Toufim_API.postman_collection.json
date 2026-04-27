@@ -1050,6 +1050,31 @@
 						}
 					],
 					"description": "Public voucher endpoints - no authentication required"
+				},
+				{
+					"name": "active-giveaway",
+					"item": [
+						{
+							"name": "Get Active Giveaway",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/active-giveaway",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"active-giveaway"
+									]
+								},
+								"description": "Get the current active giveaway with full details and ticket packages.\n\nRETURNS:\n• Complete giveaway object with all packages\n• Packages are ordered by couponCount (ascending)\n• Full details: id, title, description, totalTickets, ticketsSold, drawDate, bannerImage, status, createdAt, updatedAt\n• All ticket packages with: id, couponCount, price, title, badgeText, savePercentage\n\nUSE CASE:\n• Homepage giveaway display\n• Main giveaway page\n• Ticket purchase flow\n\nRESPONSE:\n✅ 200 - Active giveaway with packages\n❌ 404 - No active giveaway found\n\nNOTE: Only one giveaway can be ACTIVE at a time. Returns full data without pagination."
+							},
+							"response": []
+						}
+					],
+					"description": "Public giveaway endpoint - no authentication required, returns current ACTIVE giveaway"
 				}
 			],
 			"description": "Public endpoints accessible to all users without authentication"

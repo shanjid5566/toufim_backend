@@ -7,6 +7,7 @@ const adminGiveawayRoutes = require("./routes/adminGiveawayRoutes");
 const adminVoucherRoutes = require("./routes/adminVoucherRoutes");
 const adminServiceRoutes = require("./routes/adminServiceRoutes");
 const publicVoucherRoutes = require("./routes/publicVoucherRoutes");
+const publicGiveawayRoutes = require("./routes/publicGiveawayRoutes");
 
 // Initialize Express app
 const app = express();
@@ -42,6 +43,9 @@ app.use("/api/admin/auth", adminAuthRoutes);
 
 // Public Voucher routes (no authentication required)
 app.use("/api/vouchers", publicVoucherRoutes);
+
+// Public Giveaway route (no authentication required, returns current ACTIVE giveaway)
+app.use("/api/active-giveaway", publicGiveawayRoutes);
 
 // Admin Giveaway routes (protected: requires JWT token)
 app.use("/api/admin/giveaways", adminGiveawayRoutes);

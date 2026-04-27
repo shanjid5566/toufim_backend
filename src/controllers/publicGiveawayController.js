@@ -1,0 +1,35 @@
+const publicGiveawayService = require("../services/publicGiveawayService");
+
+/**
+ * Get active giveaway with full details and packages (public)
+ * GET /api/active-giveaway
+ * Returns the current active giveaway with all packages
+ */
+const getActiveGiveaway = async (req, res) => {
+  try {
+    const giveaway = await publicGiveawayService.getActiveGiveaway();
+
+    res.status(200).json({
+      message: "Active giveaway retrieved successfully",
+      data: giveaway,
+    });
+  } catch (error) {
+    console.error("Error fetching active giveaway:", error);
+
+    if (error.message === "No active giveaway found") {
+      return res.status(404).json({
+        error: "Not Found",
+        message: error.message,
+      });
+    }
+
+    res.status(500).json({
+      error: "Internal Server Error",
+      message: "Failed to fetch active giveaway. Please try again.",
+    });
+  }
+};
+
+module.exports = {
+  getActiveGiveaway,
+};
