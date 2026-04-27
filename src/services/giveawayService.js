@@ -205,7 +205,7 @@ const updateGiveaway = async (giveawayId, updateData, packages = null) => {
 };
 
 /**
- * Get all giveaways with pagination
+ * Get all giveaways with pagination (minimal data for list view)
  * @param {number} page - Page number
  * @param {number} limit - Items per page
  * @returns {object} Giveaways and pagination info
@@ -218,10 +218,12 @@ const getAllGiveaways = async (page = 1, limit = 10) => {
       prisma.giveaway.findMany({
         skip,
         take: limit,
-        include: {
-          packages: {
-            orderBy: { couponCount: "asc" },
-          },
+        select: {
+          id: true,
+          title: true,
+          bannerImage: true,
+          status: true,
+          createdAt: true,
         },
         orderBy: { createdAt: "desc" },
       }),

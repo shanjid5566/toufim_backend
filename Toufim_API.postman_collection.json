@@ -242,7 +242,7 @@
 										}
 									]
 								},
-								"description": "Get paginated list of all giveaways with their ticket packages."
+								"description": "Get paginated list of all giveaways. Returns minimal data for list view: id, title, bannerImage, status, createdAt. Use Get Giveaway By ID for full details including packages."
 							},
 							"response": []
 						},
