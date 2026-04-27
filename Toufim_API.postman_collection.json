@@ -183,6 +183,12 @@
 											"type": "text"
 										},
 										{
+											"key": "status",
+											"value": "ACTIVE",
+											"type": "text",
+											"description": "ACTIVE (publish now - default), DRAFT (save as draft), or COMPLETED. Only one ACTIVE giveaway allowed - returns 409 error if one exists."
+										},
+										{
 											"key": "bannerImage",
 											"type": "file",
 											"src": []
@@ -200,7 +206,7 @@
 										"giveaways"
 									]
 								},
-								"description": "Create a new giveaway with ticket packages. Upload bannerImage as file. System auto-generates title, basePrice, savePercentage, and badgeText for each package. Returns full image URL in response."
+								"description": "Create a new giveaway with ticket packages. Upload bannerImage as file. Default status is ACTIVE (publish immediately). Use status='DRAFT' to save without publishing. If trying to create ACTIVE when one already exists, returns 409 Conflict error. System auto-generates title, basePrice, savePercentage, and badgeText for each package."
 							},
 							"response": []
 						},
@@ -220,7 +226,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/api/admin/giveaways?page=1&limit=10",
+									"raw": "{{base_url}}/api/admin/giveaways?page=1&limit=10&status=DRAFT",
 									"host": [
 										"{{base_url}}"
 									],
@@ -239,10 +245,15 @@
 											"key": "limit",
 											"value": "10",
 											"description": "Items per page (default: 10)"
+										},
+										{
+											"key": "status",
+											"value": "DRAFT",
+											"description": "Filter by status: DRAFT, ACTIVE, or COMPLETED (optional)"
 										}
 									]
 								},
-								"description": "Get paginated list of all giveaways. Returns minimal data for list view: id, title, bannerImage, status, createdAt. Use Get Giveaway By ID for full details including packages."
+								"description": "Get paginated list of giveaways. Returns minimal data for list view: id, title, bannerImage, status, createdAt. Use status query parameter to filter (DRAFT, ACTIVE, COMPLETED). Remove status to get all. Use Get Giveaway By ID for full details including packages."
 							},
 							"response": []
 						},
@@ -328,6 +339,12 @@
 											"type": "text"
 										},
 										{
+											"key": "status",
+											"value": "ACTIVE",
+											"type": "text",
+											"description": "Update status to ACTIVE to publish the giveaway. Returns 409 error if another active giveaway exists."
+										},
+										{
 											"key": "bannerImage",
 											"type": "file",
 											"src": []
@@ -353,7 +370,7 @@
 										}
 									]
 								},
-								"description": "Update giveaway details. All fields are optional. Can update title, description, totalTickets, drawDate, drawTime, bannerImage (file upload), and packages. If packages are provided, all existing packages will be replaced with the new ones."
+								"description": "Update giveaway details. All fields are optional. Can update title, description, totalTickets, drawDate, drawTime, bannerImage (file upload), status, and packages. If packages are provided, all existing packages will be replaced with the new ones. Set status='ACTIVE' to publish a draft - returns 409 error if another active giveaway exists."
 							},
 							"response": []
 						},

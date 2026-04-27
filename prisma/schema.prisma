@@ -83,6 +83,7 @@ model Lead {
 enum GiveawayStatus {
   ACTIVE
   COMPLETED
+  DRAFT
 }
 
 model Giveaway {

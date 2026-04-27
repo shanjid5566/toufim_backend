@@ -92,6 +92,22 @@ const createGiveaway = async (giveawayData, packages) => {
     // Combine drawDate and drawTime into DateTime
     const drawDateTime = combineDateAndTime(giveawayData.drawDate, giveawayData.drawTime);
 
+    // If publishing as ACTIVE, check if another active giveaway exists
+    const status = giveawayData.status || "ACTIVE";
+    if (status === "ACTIVE") {
+      const existingActive = await prisma.giveaway.findFirst({
+        where: {
+          status: "ACTIVE",
+        },
+      });
+
+      if (existingActive) {
+        throw new Error(
+          "An active giveaway already exists. Please complete or draft the current active giveaway before creating a new one."
+        );
+      }
+    }
+
     // Create giveaway with packages
     const giveaway = await prisma.giveaway.create({
       data: {
@@ -100,7 +116,7 @@ const createGiveaway = async (giveawayData, packages) => {
         totalTickets: giveawayData.totalTickets,
         drawDate: drawDateTime,
         bannerImage: giveawayData.bannerImage,
-        status: giveawayData.status || "ACTIVE",
+        status: status,
         packages: {
           create: packages
             .sort((a, b) => a.couponCount - b.couponCount)
@@ -156,6 +172,22 @@ const updateGiveaway = async (giveawayId, updateData, packages = null) => {
       data.drawDate = combineDateAndTime(updateData.drawDate, updateData.drawTime);
     }
 
+    // If updating to ACTIVE status, check if another active giveaway exists
+    if (updateData.status === "ACTIVE") {
+      const existingActive = await prisma.giveaway.findFirst({
+        where: {
+          status: "ACTIVE",
+          id: { not: giveawayId },
+        },
+      });
+
+      if (existingActive) {
+        throw new Error(
+          "An active giveaway already exists. Please complete or draft the current active giveaway before activating this one."
+        );
+      }
+    }
+
     // If packages are provided, delete old ones and create new ones
     if (packages && Array.isArray(packages) && packages.length > 0) {
       // Delete existing packages
@@ -208,14 +240,22 @@ const updateGiveaway = async (giveawayId, updateData, packages = null) => {
  * Get all giveaways with pagination (minimal data for list view)
  * @param {number} page - Page number
  * @param {number} limit - Items per page
+ * @param {string} status - Optional status filter (DRAFT, ACTIVE, COMPLETED)
  * @returns {object} Giveaways and pagination info
  */
-const getAllGiveaways = async (page = 1, limit = 10) => {
+const getAllGiveaways = async (page = 1, limit = 10, status = null) => {
   try {
     const skip = (page - 1) * limit;
 
+    // Build where clause
+    const where = {};
+    if (status) {
+      where.status = status;
+    }
+
     const [giveaways, total] = await Promise.all([
       prisma.giveaway.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -227,7 +267,7 @@ const getAllGiveaways = async (page = 1, limit = 10) => {
         },
         orderBy: { createdAt: "desc" },
       }),
-      prisma.giveaway.count(),
+      prisma.giveaway.count({ where }),
     ]);
 
     return {

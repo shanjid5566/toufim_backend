@@ -16,7 +16,7 @@ const giveawayService = require("../services/giveawayService");
  */
 const createGiveaway = async (req, res) => {
   try {
-    const { title, description, totalTickets, drawDate, drawTime, packages: packagesJson } =
+    const { title, description, totalTickets, drawDate, drawTime, status, packages: packagesJson } =
       req.body;
 
     // Parse packages from JSON string (when using multipart/form-data)
@@ -46,6 +46,14 @@ const createGiveaway = async (req, res) => {
       return res.status(400).json({
         error: "Validation Error",
         message: "totalTickets must be a positive number",
+      });
+    }
+
+    // Validate status if provided
+    if (status && !["DRAFT", "ACTIVE", "COMPLETED"].includes(status)) {
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "status must be DRAFT, ACTIVE, or COMPLETED",
       });
     }
 
@@ -96,6 +104,7 @@ const createGiveaway = async (req, res) => {
         drawDate,
         drawTime,
         bannerImage: bannerImageUrl,
+        status: status || "ACTIVE", // Default to ACTIVE
       },
       packages
     );
@@ -106,6 +115,15 @@ const createGiveaway = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating giveaway:", error);
+    
+    // Handle active giveaway conflict
+    if (error.message.includes("active giveaway already exists")) {
+      return res.status(409).json({
+        error: "Conflict",
+        message: error.message.replace("Failed to create giveaway: ", ""),
+      });
+    }
+
     res.status(500).json({
       error: "Internal Server Error",
       message: error.message,
@@ -119,11 +137,20 @@ const createGiveaway = async (req, res) => {
  */
 const getAllGiveaways = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, status } = req.query;
+
+    // Validate status if provided
+    if (status && !["DRAFT", "ACTIVE", "COMPLETED"].includes(status)) {
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "status must be DRAFT, ACTIVE, or COMPLETED",
+      });
+    }
 
     const result = await giveawayService.getAllGiveaways(
       parseInt(page),
-      parseInt(limit)
+      parseInt(limit),
+      status
     );
 
     res.status(200).json({
@@ -277,6 +304,14 @@ const updateGiveaway = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating giveaway:", error);
+
+    // Handle active giveaway conflict
+    if (error.message.includes("active giveaway already exists")) {
+      return res.status(409).json({
+        error: "Conflict",
+        message: error.message.replace("Failed to update giveaway: ", ""),
+      });
+    }
 
     if (error.message.includes("not found")) {
       return res.status(404).json({
