@@ -10,19 +10,28 @@ const giveawayService = require("../services/giveawayService");
  *   totalTickets: number,
  *   drawDate: string (YYYY-MM-DD),
  *   drawTime: string (HH:mm in 24-hour format),
- *   bannerImage: string (optional),
- *   packages: [
- *     {
- *       couponCount: number (e.g., 1, 5, 10),
- *       price: decimal (total price for package)
- *     }
- *   ]
+ *   bannerImage: file (optional - multipart/form-data),
+ *   packages: JSON string of array
  * }
  */
 const createGiveaway = async (req, res) => {
   try {
-    const { title, description, totalTickets, drawDate, drawTime, bannerImage, packages } =
+    const { title, description, totalTickets, drawDate, drawTime, packages: packagesJson } =
       req.body;
+
+    // Parse packages from JSON string (when using multipart/form-data)
+    let packages;
+    try {
+      packages = JSON.parse(packagesJson);
+    } catch (err) {
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "Invalid packages format. Must be valid JSON array.",
+      });
+    }
+
+    // Parse totalTickets to integer (comes as string from form-data)
+    const totalTicketsNum = parseInt(totalTickets, 10);
 
     // Validation
     if (!title || !description || !totalTickets || !drawDate || !drawTime || !packages) {
@@ -30,6 +39,13 @@ const createGiveaway = async (req, res) => {
         error: "Validation Error",
         message:
           "Missing required fields: title, description, totalTickets, drawDate, drawTime, packages",
+      });
+    }
+
+    if (isNaN(totalTicketsNum) || totalTicketsNum <= 0) {
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "totalTickets must be a positive number",
       });
     }
 
@@ -64,14 +80,22 @@ const createGiveaway = async (req, res) => {
       }
     }
 
+    // Get uploaded file path if exists
+    let bannerImageUrl = null;
+    if (req.file) {
+      // Generate full URL: http://localhost:3000/uploads/filename.jpg
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      bannerImageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+    }
+
     const giveaway = await giveawayService.createGiveaway(
       {
         title,
         description,
-        totalTickets,
+        totalTickets: totalTicketsNum,
         drawDate,
         drawTime,
-        bannerImage,
+        bannerImage: bannerImageUrl,
       },
       packages
     );
@@ -154,25 +178,66 @@ const getGiveawayById = async (req, res) => {
  *   title?: string,
  *   description?: string,
  *   totalTickets?: number,
- *   drawDate?: datetime,
+ *   drawDate?: string (YYYY-MM-DD),
+ *   drawTime?: string (HH:mm),
  *   bannerImage?: string,
- *   status?: "ACTIVE" | "COMPLETED"
+ *   status?: "ACTIVE" | "COMPLETED",
+ *   packages?: array [{couponCount, price}]
  * }
  */
 const updateGiveaway = async (req, res) => {
   try {
     const { giveawayId } = req.params;
-    const { title, description, totalTickets, drawDate, bannerImage, status } =
+    const { title, description, totalTickets, drawDate, drawTime, bannerImage, status, packages } =
       req.body;
 
-    const giveaway = await giveawayService.updateGiveaway(giveawayId, {
-      title,
-      description,
-      totalTickets,
-      drawDate,
-      bannerImage,
-      status,
-    });
+    // Validate packages if provided
+    if (packages) {
+      if (!Array.isArray(packages) || packages.length === 0) {
+        return res.status(400).json({
+          error: "Validation Error",
+          message: "Packages must be a non-empty array",
+        });
+      }
+
+      // Validate each package
+      for (const pkg of packages) {
+        if (!pkg.couponCount || !pkg.price) {
+          return res.status(400).json({
+            error: "Validation Error",
+            message: "Each package must have: couponCount, price",
+          });
+        }
+
+        if (isNaN(pkg.couponCount) || pkg.couponCount <= 0) {
+          return res.status(400).json({
+            error: "Validation Error",
+            message: "couponCount must be a positive number",
+          });
+        }
+
+        if (isNaN(pkg.price) || pkg.price <= 0) {
+          return res.status(400).json({
+            error: "Validation Error",
+            message: "price must be a positive number",
+          });
+        }
+      }
+    }
+
+    const giveaway = await giveawayService.updateGiveaway(
+      giveawayId,
+      {
+        title,
+        description,
+        totalTickets,
+        drawDate,
+        drawTime,
+        bannerImage,
+        status,
+      },
+      packages
+    );
 
     res.status(200).json({
       message: "Giveaway updated successfully",
@@ -188,73 +253,6 @@ const updateGiveaway = async (req, res) => {
       });
     }
 
-    res.status(500).json({
-      error: "Internal Server Error",
-      message: error.message,
-    });
-  }
-};
-
-/**
- * Add new ticket packages to a giveaway
- * POST /api/admin/giveaways/:giveawayId/packages
- * Body: {
- *   packages: [
- *     {
- *       couponCount: number,
- *       price: decimal
- *     }
- *   ]
- * }
- */
-const addTicketPackages = async (req, res) => {
-  try {
-    const { giveawayId } = req.params;
-    const { packages } = req.body;
-
-    // Validation
-    if (!packages || !Array.isArray(packages) || packages.length === 0) {
-      return res.status(400).json({
-        error: "Validation Error",
-        message: "Packages must be a non-empty array",
-      });
-    }
-
-    // Validate each package - only couponCount and price required
-    for (const pkg of packages) {
-      if (!pkg.couponCount || !pkg.price) {
-        return res.status(400).json({
-          error: "Validation Error",
-          message: "Each package must have: couponCount, price",
-        });
-      }
-
-      if (isNaN(pkg.couponCount) || pkg.couponCount <= 0) {
-        return res.status(400).json({
-          error: "Validation Error",
-          message: "couponCount must be a positive number",
-        });
-      }
-
-      if (isNaN(pkg.price) || pkg.price <= 0) {
-        return res.status(400).json({
-          error: "Validation Error",
-          message: "price must be a positive number",
-        });
-      }
-    }
-
-    const createdPackages = await giveawayService.addTicketPackages(
-      giveawayId,
-      packages
-    );
-
-    res.status(201).json({
-      message: "Ticket packages added successfully",
-      data: createdPackages,
-    });
-  } catch (error) {
-    console.error("Error adding ticket packages:", error);
     res.status(500).json({
       error: "Internal Server Error",
       message: error.message,
@@ -298,6 +296,5 @@ module.exports = {
   getAllGiveaways,
   getGiveawayById,
   updateGiveaway,
-  addTicketPackages,
   deleteGiveaway,
 };

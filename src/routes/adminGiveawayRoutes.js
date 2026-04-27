@@ -3,6 +3,7 @@ const router = express.Router();
 
 const adminAuthMiddleware = require("../middleware/adminAuth");
 const giveawayController = require("../controllers/giveawayController");
+const upload = require("../config/multer");
 
 /**
  * Admin Giveaway Routes
@@ -16,8 +17,9 @@ router.use(adminAuthMiddleware);
  * POST /api/admin/giveaways
  * Create a new giveaway with ticket pricing tiers
  * Required admin authentication
+ * Accepts multipart/form-data with optional bannerImage file
  */
-router.post("/", giveawayController.createGiveaway);
+router.post("/", upload.single("bannerImage"), giveawayController.createGiveaway);
 
 /**
  * GET /api/admin/giveaways
@@ -36,17 +38,10 @@ router.get("/:giveawayId", giveawayController.getGiveawayById);
 
 /**
  * PUT /api/admin/giveaways/:giveawayId
- * Update an existing giveaway
+ * Update an existing giveaway (can include packages to replace all existing packages)
  * Required admin authentication
  */
 router.put("/:giveawayId", giveawayController.updateGiveaway);
-
-/**
- * POST /api/admin/giveaways/:giveawayId/packages
- * Add new ticket packages to a giveaway
- * Required admin authentication
- */
-router.post("/:giveawayId/packages", giveawayController.addTicketPackages);
 
 /**
  * DELETE /api/admin/giveaways/:giveawayId

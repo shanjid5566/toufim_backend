@@ -136,10 +136,11 @@ const createGiveaway = async (giveawayData, packages) => {
 /**
  * Update an existing giveaway
  * @param {string} giveawayId - ID of the giveaway to update
- * @param {object} updateData - Data to update (can include drawDate and drawTime)
+ * @param {object} updateData - Data to update (can include drawDate, drawTime, and packages)
+ * @param {array} packages - Optional array of new packages to replace existing ones
  * @returns {object} Updated giveaway
  */
-const updateGiveaway = async (giveawayId, updateData) => {
+const updateGiveaway = async (giveawayId, updateData, packages = null) => {
   try {
     // Prepare update data
     const data = {
@@ -155,6 +156,40 @@ const updateGiveaway = async (giveawayId, updateData) => {
       data.drawDate = combineDateAndTime(updateData.drawDate, updateData.drawTime);
     }
 
+    // If packages are provided, delete old ones and create new ones
+    if (packages && Array.isArray(packages) && packages.length > 0) {
+      // Delete existing packages
+      await prisma.ticketPackage.deleteMany({
+        where: { giveawayId },
+      });
+
+      // Calculate base price from new packages
+      const basePrice = getBasePricePerTicket(packages);
+
+      // Prepare new packages with auto-generated fields
+      const packagesData = packages.map((pkg) => {
+        const savePercentage = calculateSavePercentage(
+          pkg.couponCount,
+          basePrice,
+          pkg.price
+        );
+
+        return {
+          title: generatePackageTitle(pkg.couponCount),
+          couponCount: pkg.couponCount,
+          price: pkg.price,
+          basePrice: basePrice,
+          savePercentage,
+          badgeText: generateBadgeText(savePercentage),
+        };
+      });
+
+      // Add packages to update data
+      data.packages = {
+        create: packagesData,
+      };
+    }
+
     const giveaway = await prisma.giveaway.update({
       where: { id: giveawayId },
       data,
@@ -166,57 +201,6 @@ const updateGiveaway = async (giveawayId, updateData) => {
     return giveaway;
   } catch (error) {
     throw new Error(`Failed to update giveaway: ${error.message}`);
-  }
-};
-
-/**
- * Add ticket packages to a giveaway
- * @param {string} giveawayId - ID of the giveaway
- * @param {array} packages - Array of ticket packages (only couponCount and price)
- * @returns {array} Created packages
- */
-const addTicketPackages = async (giveawayId, packages) => {
-  try {
-    // Get existing packages to determine base price
-    const existingPackages = await prisma.ticketPackage.findMany({
-      where: { giveawayId },
-    });
-
-    // Get base price from existing packages or use first existing package
-    let basePrice;
-    if (existingPackages.length > 0) {
-      basePrice = parseFloat(existingPackages[0].basePrice);
-    } else {
-      // If no existing packages, use the first new package to calculate base price
-      basePrice = getBasePricePerTicket(packages);
-    }
-
-    const allPackages = [...existingPackages, ...packages];
-    const createdPackages = await Promise.all(
-      packages.map(async (pkg) => {
-        const savePercentage = calculateSavePercentage(
-          pkg.couponCount,
-          basePrice,
-          pkg.price
-        );
-
-        return prisma.ticketPackage.create({
-          data: {
-            title: generatePackageTitle(pkg.couponCount),
-            couponCount: pkg.couponCount,
-            price: pkg.price,
-            basePrice: basePrice,
-            savePercentage,
-            badgeText: generateBadgeText(savePercentage),
-            giveawayId,
-          },
-        });
-      })
-    );
-
-    return createdPackages;
-  } catch (error) {
-    throw new Error(`Failed to add ticket packages: ${error.message}`);
   }
 };
 
@@ -314,7 +298,6 @@ module.exports = {
   generatePackageTitle,
   createGiveaway,
   updateGiveaway,
-  addTicketPackages,
   getAllGiveaways,
   getGiveawayById,
   deleteGiveaway,

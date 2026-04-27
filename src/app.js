@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 
 // Import routes
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
@@ -12,6 +13,9 @@ app.use(express.json());
 
 // Middleware to parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Routes
 app.get("/", (req, res) => {

@@ -148,15 +148,46 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
+								"header": [],
 								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"title\": \"iPhone 15 Pro Max Giveaway\",\n  \"description\": \"Win the latest iPhone 15 Pro Max - 256GB Space Black\",\n  \"totalTickets\": 1000,\n  \"drawDate\": \"2026-05-15\",\n  \"drawTime\": \"18:30\",\n  \"ticketPackages\": [\n    {\n      \"couponCount\": 1,\n      \"price\": 50\n    },\n    {\n      \"couponCount\": 5,\n      \"price\": 200\n    },\n    {\n      \"couponCount\": 10,\n      \"price\": 350\n    },\n    {\n      \"couponCount\": 20,\n      \"price\": 600\n    }\n  ]\n}"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "iPhone 15 Pro Max Giveaway",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "Win the latest iPhone 15 Pro Max - 256GB Space Black",
+											"type": "text"
+										},
+										{
+											"key": "totalTickets",
+											"value": "1000",
+											"type": "text"
+										},
+										{
+											"key": "drawDate",
+											"value": "2026-05-15",
+											"type": "text"
+										},
+										{
+											"key": "drawTime",
+											"value": "18:30",
+											"type": "text"
+										},
+										{
+											"key": "packages",
+											"value": "[{\"couponCount\":1,\"price\":50},{\"couponCount\":5,\"price\":200},{\"couponCount\":10,\"price\":350},{\"couponCount\":20,\"price\":600}]",
+											"type": "text"
+										},
+										{
+											"key": "bannerImage",
+											"type": "file",
+											"src": []
+										}
+									]
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/giveaways",
@@ -169,7 +200,7 @@
 										"giveaways"
 									]
 								},
-								"description": "Create a new giveaway with ticket packages. System auto-generates title, basePrice, savePercentage, and badgeText for each package."
+								"description": "Create a new giveaway with ticket packages. Upload bannerImage as file. System auto-generates title, basePrice, savePercentage, and badgeText for each package. Returns full image URL in response."
 							},
 							"response": []
 						},
@@ -275,7 +306,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"title\": \"iPhone 15 Pro Max Giveaway - Updated\",\n  \"description\": \"Updated description - Win the latest iPhone 15 Pro Max\",\n  \"drawDate\": \"2026-05-20\",\n  \"drawTime\": \"20:00\"\n}"
+									"raw": "{\n  \"title\": \"iPhone 15 Pro Max Giveaway - Updated\",\n  \"description\": \"Updated description - Win the latest iPhone 15 Pro Max\",\n  \"drawDate\": \"2026-05-20\",\n  \"drawTime\": \"20:00\",\n  \"packages\": [\n    {\n      \"couponCount\": 50,\n      \"price\": 1200\n    },\n    {\n      \"couponCount\": 100,\n      \"price\": 2000\n    }\n  ]\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId",
@@ -296,55 +327,7 @@
 										}
 									]
 								},
-								"description": "Update giveaway details (title, description, drawDate, drawTime). Does not update ticket packages."
-							},
-							"response": []
-						},
-						{
-							"name": "Add Ticket Packages",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{jwt_token}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"packages\": [\n    {\n      \"couponCount\": 50,\n      \"price\": 1200\n    },\n    {\n      \"couponCount\": 100,\n      \"price\": 2000\n    }\n  ]\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId/packages",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"admin",
-										"giveaways",
-										":giveawayId",
-										"packages"
-									],
-									"variable": [
-										{
-											"key": "giveawayId",
-											"value": "",
-											"description": "Giveaway UUID"
-										}
-									]
-								},
-								"description": "Add new ticket packages to existing giveaway. System auto-generates all package fields."
+								"description": "Update giveaway details. Can update title, description, drawDate, drawTime, and optionally replace all packages."
 							},
 							"response": []
 						},
