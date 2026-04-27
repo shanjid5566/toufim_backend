@@ -106,11 +106,13 @@ model Giveaway {
 
 // Ticket Package model
 model TicketPackage {
-  id          String  @id @default(uuid())
-  title       String
-  couponCount Int
-  price       Decimal @db.Decimal(10, 2)
-  badgeText   String?
+  id             String  @id @default(uuid())
+  title          String
+  couponCount    Int     // Number of tickets in this package
+  price          Decimal @db.Decimal(10, 2) // Total price for this package
+  basePrice      Decimal @db.Decimal(10, 2) // Individual ticket price (for save % calculation)
+  savePercentage Decimal @db.Decimal(5, 2) @default(0) // Calculated save percentage
+  badgeText      String?
 
   giveawayId String
   giveaway   Giveaway @relation(fields: [giveawayId], references: [id])

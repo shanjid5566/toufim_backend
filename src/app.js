@@ -1,5 +1,9 @@
 const express = require("express");
 
+// Import routes
+const adminAuthRoutes = require("./routes/adminAuthRoutes");
+const adminGiveawayRoutes = require("./routes/adminGiveawayRoutes");
+
 // Initialize Express app
 const app = express();
 
@@ -9,6 +13,7 @@ app.use(express.json());
 // Middleware to parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
 
+// Routes
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "Welcome to the Toufim API",
@@ -24,6 +29,12 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Admin Authentication routes (public: login, register)
+app.use("/api/admin/auth", adminAuthRoutes);
+
+// Admin Giveaway routes (protected: requires JWT token)
+app.use("/api/admin/giveaways", adminGiveawayRoutes);
 
 // 404 handler - catch all undefined routes
 app.use((req, res) => {
