@@ -1,5 +1,5 @@
 const prisma = require("../lib/prisma");
-const { dutchToEnum, enumToDutch } = require("../utils/serviceCategoryMapping");
+const { dutchToEnum, enumToDutch, statusDutchToEnum, statusEnumToDutch } = require("../utils/serviceCategoryMapping");
 
 /**
  * Create a new lead from contact form
@@ -40,6 +40,7 @@ const createLead = async (leadData, referenceImages = []) => {
   return {
     ...lead,
     serviceType: enumToDutch(lead.serviceType) || lead.serviceType,
+    status: statusEnumToDutch(lead.status) || lead.status,
   };
 };
 
@@ -64,6 +65,7 @@ const getAllLeads = async (filters = {}) => {
   return leads.map((lead) => ({
     ...lead,
     serviceType: enumToDutch(lead.serviceType) || lead.serviceType,
+    status: statusEnumToDutch(lead.status) || lead.status,
   }));
 };
 
@@ -85,31 +87,36 @@ const getLeadById = async (leadId) => {
   return {
     ...lead,
     serviceType: enumToDutch(lead.serviceType) || lead.serviceType,
+    status: statusEnumToDutch(lead.status) || lead.status,
   };
 };
 
 /**
  * Update lead status (Admin only)
  * @param {string} leadId - Lead ID
- * @param {string} status - New status (PENDING/CONTACTED/COMPLETED/QUOTED/CLOSED)
- * @returns {Promise<Object>} Updated lead with Dutch serviceType
+ * @param {string} status - New status (can be Dutch or English)
+ * @returns {Promise<Object>} Updated lead with Dutch serviceType and status
  */
 const updateLeadStatus = async (leadId, status) => {
   const validStatuses = ["PENDING", "CONTACTED", "COMPLETED", "QUOTED", "CLOSED"];
 
-  if (!validStatuses.includes(status)) {
+  // Try to convert Dutch status to English, if already English keep it
+  const englishStatus = statusDutchToEnum(status) || status;
+
+  if (!validStatuses.includes(englishStatus)) {
     throw new Error(`Ongeldige status: ${status}`);
   }
 
   const lead = await prisma.lead.update({
     where: { id: leadId },
-    data: { status },
+    data: { status: englishStatus },
   });
 
-  // Convert service type to Dutch
+  // Convert service type and status to Dutch
   return {
     ...lead,
     serviceType: enumToDutch(lead.serviceType) || lead.serviceType,
+    status: statusEnumToDutch(lead.status) || lead.status,
   };
 };
 
@@ -231,15 +238,18 @@ const bulkCreateLeads = async (csvData) => {
       const validStatuses = ["PENDING", "CONTACTED", "QUOTED", "COMPLETED", "CLOSED"];
       
       if (row.status && row.status.trim()) {
-        const upperStatus = row.status.trim().toUpperCase();
+        const trimmedStatus = row.status.trim();
         
-        if (!validStatuses.includes(upperStatus)) {
+        // Try to convert Dutch status to English, if already English keep it
+        const englishStatus = statusDutchToEnum(trimmedStatus) || trimmedStatus.toUpperCase();
+        
+        if (!validStatuses.includes(englishStatus)) {
           throw new Error(
-            `Invalid status: "${row.status}". Must be one of: PENDING, CONTACTED, QUOTED, COMPLETED, CLOSED`
+            `Invalid status: "${row.status}". Must be one of: PENDING, CONTACTED, QUOTED, COMPLETED, CLOSED (or Dutch: In afwachting, Gecontacteerd, Geoffreerd, Voltooid, Gesloten)`
           );
         }
         
-        status = upperStatus;
+        status = englishStatus;
       }
 
       // Create lead

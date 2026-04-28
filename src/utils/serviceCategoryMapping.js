@@ -15,8 +15,27 @@ const CATEGORY_TRANSLATIONS = {
   OVERALL_SERVICE: "Algemene service",
 };
 
+/**
+ * Lead Status Translation Mapping
+ * Maps between English status values (database) and Dutch display names (frontend)
+ */
+const STATUS_TRANSLATIONS = {
+  // English status -> Dutch display name
+  PENDING: "In afwachting",
+  CONTACTED: "Gecontacteerd",
+  QUOTED: "Geoffreerd",
+  COMPLETED: "Voltooid",
+  CLOSED: "Gesloten",
+};
+
 // Reverse mapping: Dutch display name -> English enum
 const DUTCH_TO_ENUM = Object.entries(CATEGORY_TRANSLATIONS).reduce((acc, [key, value]) => {
+  acc[value] = key;
+  return acc;
+}, {});
+
+// Reverse mapping: Dutch status name -> English status value
+const DUTCH_TO_STATUS = Object.entries(STATUS_TRANSLATIONS).reduce((acc, [key, value]) => {
   acc[value] = key;
   return acc;
 }, {});
@@ -64,6 +83,53 @@ const isValidDutchCategory = (dutchName) => {
   return DUTCH_TO_ENUM.hasOwnProperty(dutchName);
 };
 
+// ========================================
+// STATUS TRANSLATION FUNCTIONS
+// ========================================
+
+/**
+ * Convert Dutch status name to English status value
+ * @param {string} dutchStatus - Dutch status name
+ * @returns {string|null} English status value or null if not found
+ */
+const statusDutchToEnum = (dutchStatus) => {
+  return DUTCH_TO_STATUS[dutchStatus] || null;
+};
+
+/**
+ * Convert English status value to Dutch display name
+ * @param {string} statusValue - English status value
+ * @returns {string|null} Dutch display name or null if not found
+ */
+const statusEnumToDutch = (statusValue) => {
+  return STATUS_TRANSLATIONS[statusValue] || null;
+};
+
+/**
+ * Get all valid Dutch status names
+ * @returns {string[]} Array of Dutch status names
+ */
+const getAllDutchStatuses = () => {
+  return Object.values(STATUS_TRANSLATIONS);
+};
+
+/**
+ * Get all valid English status values
+ * @returns {string[]} Array of English status values
+ */
+const getAllEnumStatuses = () => {
+  return Object.keys(STATUS_TRANSLATIONS);
+};
+
+/**
+ * Check if Dutch status name is valid
+ * @param {string} dutchStatus - Dutch status name
+ * @returns {boolean} True if valid
+ */
+const isValidDutchStatus = (dutchStatus) => {
+  return DUTCH_TO_STATUS.hasOwnProperty(dutchStatus);
+};
+
 /**
  * Transform service object: Convert category enum to Dutch
  * @param {object} service - Service object with category enum
@@ -90,6 +156,7 @@ const servicesWithDutchCategories = (services) => {
 };
 
 module.exports = {
+  // Service category functions
   dutchToEnum,
   enumToDutch,
   getAllDutchCategories,
@@ -99,4 +166,13 @@ module.exports = {
   servicesWithDutchCategories,
   CATEGORY_TRANSLATIONS,
   DUTCH_TO_ENUM,
+  
+  // Status translation functions
+  statusDutchToEnum,
+  statusEnumToDutch,
+  getAllDutchStatuses,
+  getAllEnumStatuses,
+  isValidDutchStatus,
+  STATUS_TRANSLATIONS,
+  DUTCH_TO_STATUS,
 };
