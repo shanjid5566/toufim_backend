@@ -7,6 +7,7 @@ const adminGiveawayRoutes = require("./routes/adminGiveawayRoutes");
 const adminVoucherRoutes = require("./routes/adminVoucherRoutes");
 const adminServiceRoutes = require("./routes/adminServiceRoutes");
 const adminLeadRoutes = require("./routes/adminLeadRoutes");
+const adminCouponRoutes = require("./routes/adminCouponRoutes");
 const publicVoucherRoutes = require("./routes/publicVoucherRoutes");
 const publicGiveawayRoutes = require("./routes/publicGiveawayRoutes");
 const publicOrderRoutes = require("./routes/publicOrderRoutes");
@@ -67,6 +68,9 @@ app.use("/api/admin/services", adminServiceRoutes);
 
 // Admin Lead routes (protected: requires JWT token)
 app.use("/api/admin/leads", adminLeadRoutes);
+
+// Admin Coupon routes (protected: requires JWT token)
+app.use("/api/admin/coupons", adminCouponRoutes);
 
 // 404 handler - catch all undefined routes
 app.use((req, res) => {

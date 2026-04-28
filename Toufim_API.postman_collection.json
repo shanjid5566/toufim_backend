@@ -1250,9 +1250,83 @@
 						}
 					],
 					"description": "Lead management endpoints - view, update status, and delete contact form submissions"
+				},
+				{
+					"name": "coupons",
+					"item": [
+						{
+							"name": "Get All Coupons (Grouped by Participant)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/coupons",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"coupons"
+									]
+								},
+								"description": "Get all coupons grouped by participant email (Admin only).\n\nThis endpoint returns all participants who have purchased coupons, with their order details and coupon information.\n\n========================================\n📊 RESPONSE STRUCTURE\n========================================\n\nReturns participants grouped by email, each showing:\n• Email address (unique identifier)\n• Full name\n• Phone number\n• Instagram username\n• Initials (first letters of name)\n• Total orders count\n• Total coupons purchased\n• Total amount spent\n• Array of all orders with coupon details\n\n========================================\n📋 PARTICIPANT DATA\n========================================\n\nEach participant object contains:\n\n1. **Basic Info:**\n   - email: Participant email address\n   - fullName: Participant full name\n   - phone: Phone number\n   - instagram: Instagram username\n   - initials: First letters of name (e.g., \"MW\" for Marcus Wright)\n\n2. **Summary:**\n   - totalOrders: Number of orders placed\n   - totalCoupons: Total coupons purchased across all orders\n   - totalSpent: Total amount spent (€)\n\n3. **Orders Array:**\n   Each order contains:\n   - orderId: Order UUID\n   - giveawayName: Name of the giveaway\n   - purchaseDate: When the order was placed\n   - quantity: Number of coupons in this order\n   - totalPrice: Order amount (€)\n   - status: COMPLETED or REFUNDED\n   - couponCodes: Array of coupon codes (e.g., [\"GW-A1B2C3-001\", \"GW-A1B2C3-002\"])\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Coupons retrieved successfully\",\n  \"data\": {\n    \"totalParticipants\": 4,\n    \"participants\": [\n      {\n        \"email\": \"m.wright@structura.io\",\n        \"fullName\": \"Marcus Wright\",\n        \"phone\": \"(+07) 555-0135\",\n        \"instagram\": \"@wright_builds\",\n        \"initials\": \"MW\",\n        \"totalOrders\": 2,\n        \"totalCoupons\": 5,\n        \"totalSpent\": 250.00,\n        \"orders\": [\n          {\n            \"orderId\": \"uuid-1\",\n            \"giveawayName\": \"€10,000 Cash Giveaway\",\n            \"purchaseDate\": \"2023-10-12T14:20:00Z\",\n            \"quantity\": 3,\n            \"totalPrice\": 150.00,\n            \"status\": \"COMPLETED\",\n            \"couponCodes\": [\n              \"RTK-4521\",\n              \"RTK-4522\",\n              \"RTK-4523\"\n            ]\n          },\n          {\n            \"orderId\": \"uuid-2\",\n            \"giveawayName\": \"€10,000 Cash Giveaway\",\n            \"purchaseDate\": \"2023-10-13T09:12:00Z\",\n            \"quantity\": 2,\n            \"totalPrice\": 100.00,\n            \"status\": \"REFUNDED\",\n            \"couponCodes\": [\n              \"RTK-4524\",\n              \"RTK-4933\"\n            ]\n          }\n        ]\n      },\n      {\n        \"email\": \"sarah.lopez@example.com\",\n        \"fullName\": \"Sarah Lopez\",\n        \"phone\": \"+31612345678\",\n        \"instagram\": \"@lopez_design\",\n        \"initials\": \"SL\",\n        \"totalOrders\": 1,\n        \"totalCoupons\": 2,\n        \"totalSpent\": 100.00,\n        \"orders\": [\n          {\n            \"orderId\": \"uuid-3\",\n            \"giveawayName\": \"€10,000 Cash Giveaway\",\n            \"purchaseDate\": \"2023-10-13T15:05:00Z\",\n            \"quantity\": 2,\n            \"totalPrice\": 100.00,\n            \"status\": \"COMPLETED\",\n            \"couponCodes\": [\n              \"RTK-5001\",\n              \"RTK-5002\"\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}\n\n========================================\n💡 USE CASES\n========================================\n\n1. **Admin Dashboard:**\n   - Display all participants in a table\n   - Show participant count, total sales\n   - Filter by status (COMPLETED/REFUNDED)\n\n2. **Participant Management:**\n   - View all buyers\n   - Track purchase history\n   - Identify refunded orders\n\n3. **Statistics:**\n   - Total participants count\n   - Total coupons sold\n   - Revenue tracking\n\n========================================\n🎯 FRONTEND IMPLEMENTATION\n========================================\n\nDisplay as a table:\n\n| GIVEAWAY NAME          | PARTICIPANT | INSTAGRAM       | PURCHASE DATE | QTY | TOTAL PRICE | STATUS    | ACTIONS      |\n|------------------------|-------------|-----------------|---------------|-----|-------------|-----------|-------------|\n| €10,000 Cash Giveaway  | MW          | @wright_builds  | Oct 12, 2023  | 5   | €250.00     | Paid      | View Details|\n| €10,000 Cash Giveaway  | SL          | @lopez_design   | Oct 13, 2023  | 2   | €100.00     | Paid      | View Details|\n| €10,000 Cash Giveaway  | AB          | @anna_builds_it | Oct 13, 2023  | 1   | €50.00      | Paid      | View Details|\n\n\"View Details\" opens modal with individual participant's coupons (see Get Coupons by Email endpoint)\n\n========================================\n⚠️ IMPORTANT NOTES\n========================================\n\n• Returns only COMPLETED and REFUNDED orders (not PENDING/FAILED)\n• Participants are sorted by most recent purchase first\n• Multiple orders from same email are grouped together\n• Each order shows individual coupon codes\n• Status is at ORDER level (not coupon level)\n• Coupon codes are unique (e.g., GW-A1B2C3-001)"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Coupons by Email",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/coupons/:email",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"coupons",
+										":email"
+									],
+									"variable": [
+										{
+											"key": "email",
+											"value": "m.wright@structura.io",
+											"description": "Participant email address"
+										}
+									]
+								},
+								"description": "Get all coupons for a specific participant by email (Admin only).\n\nThis endpoint returns detailed information about a participant and all their coupons across all orders.\n\n========================================\n📊 RESPONSE STRUCTURE\n========================================\n\nReturns complete participant profile with:\n• Personal information (email, name, phone, instagram)\n• Purchase summary (total spent)\n• All orders with individual coupon details\n• Each coupon shows: ID, coupon code, status, creation date\n\n========================================\n📋 PARTICIPANT DETAILS\n========================================\n\nResponse includes:\n\n1. **Basic Info:**\n   - email: Participant email\n   - fullName: Full name\n   - phone: Phone number\n   - instagram: Instagram username\n   - initials: Name initials (e.g., \"MW\")\n   - totalSpent: Total amount spent across all orders (€)\n\n2. **Orders with Coupons:**\n   Each order contains:\n   - orderId: Order UUID\n   - giveawayName: Giveaway title\n   - purchaseDate: Order date/time\n   - quantity: Number of coupons\n   - totalPrice: Order amount (€)\n   - status: COMPLETED or REFUNDED\n   - coupons: Array of individual coupon objects\n\n3. **Individual Coupons:**\n   Each coupon shows:\n   - id: Coupon UUID\n   - couponCode: Unique code (e.g., \"RTK-4521\")\n   - status: VALID or VOID\n   - createdAt: When coupon was generated\n\n========================================\n🔗 URL PARAMETERS\n========================================\n\n:email - Participant email address (required)\n  Example: m.wright@structura.io\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Participant coupons retrieved successfully\",\n  \"data\": {\n    \"email\": \"m.wright@structura.io\",\n    \"fullName\": \"Marcus Wright\",\n    \"phone\": \"(+07) 555-0135\",\n    \"instagram\": \"@wright_builds\",\n    \"initials\": \"MW\",\n    \"totalSpent\": 250.00,\n    \"orders\": [\n      {\n        \"orderId\": \"uuid-1\",\n        \"giveawayName\": \"€10,000 Cash Giveaway\",\n        \"purchaseDate\": \"2023-10-12T14:20:00Z\",\n        \"quantity\": 3,\n        \"totalPrice\": 150.00,\n        \"status\": \"COMPLETED\",\n        \"coupons\": [\n          {\n            \"id\": \"coupon-uuid-1\",\n            \"couponCode\": \"RTK-4521\",\n            \"status\": \"VALID\",\n            \"createdAt\": \"2023-10-12T14:21:00Z\"\n          },\n          {\n            \"id\": \"coupon-uuid-2\",\n            \"couponCode\": \"RTK-4522\",\n            \"status\": \"VALID\",\n            \"createdAt\": \"2023-10-12T14:21:01Z\"\n          },\n          {\n            \"id\": \"coupon-uuid-3\",\n            \"couponCode\": \"RTK-4523\",\n            \"status\": \"VALID\",\n            \"createdAt\": \"2023-10-12T14:21:02Z\"\n          }\n        ]\n      },\n      {\n        \"orderId\": \"uuid-2\",\n        \"giveawayName\": \"€10,000 Cash Giveaway\",\n        \"purchaseDate\": \"2023-10-13T09:12:00Z\",\n        \"quantity\": 2,\n        \"totalPrice\": 100.00,\n        \"status\": \"REFUNDED\",\n        \"coupons\": [\n          {\n            \"id\": \"coupon-uuid-4\",\n            \"couponCode\": \"RTK-4524\",\n            \"status\": \"VALID\",\n            \"createdAt\": \"2023-10-13T09:13:00Z\"\n          },\n          {\n            \"id\": \"coupon-uuid-5\",\n            \"couponCode\": \"RTK-4933\",\n            \"status\": \"VALID\",\n            \"createdAt\": \"2023-10-13T09:13:01Z\"\n          }\n        ]\n      }\n    ]\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n400 - Missing email parameter:\n{\n  \"success\": false,\n  \"error\": \"Email parameter is required\"\n}\n\n404 - Participant not found:\n{\n  \"success\": false,\n  \"error\": \"Participant not found\"\n}\n\n500 - Server error:\n{\n  \"success\": false,\n  \"error\": \"Failed to retrieve participant coupons\"\n}\n\n========================================\n💡 USE CASES\n========================================\n\n1. **View Details Modal:**\n   - Triggered from \"View Details\" button in main table\n   - Shows participant info at top\n   - Lists all \"Active Coupons\" with codes\n   - Shows payment status for each order\n\n2. **Participant Profile:**\n   - Complete purchase history\n   - All coupon codes owned\n   - Refund tracking\n\n3. **Customer Support:**\n   - Verify participant's coupons\n   - Check coupon status\n   - Handle refund requests\n\n========================================\n🎯 FRONTEND IMPLEMENTATION\n========================================\n\nModal/Popup Display:\n\n┌─────────────────────────────────────────┐\n│  👤 Marcus Wright              [X]      │\n│  📧 m.wright@structura.io               │\n│  📱 (+07) 555-0135                      │\n├─────────────────────────────────────────┤\n│  Active Coupons:                        │\n│                                         │\n│  🎫 RTK-4521    Expires 2023            │\n│  🎫 RTK-4522    Expires 2023            │\n│  🎫 RTK-4523    Expires 2023            │\n│  🎫 RTK-4524    Expires 2023            │\n│  🎫 RTK-4933    Expires 2023            │\n│                                         │\n│  Payment Status: ✅ Paid                │\n│  Purchase Date: 12 Oct. 2023 14:20      │\n└─────────────────────────────────────────┘\n\n========================================\n⚠️ IMPORTANT NOTES\n========================================\n\n• Email parameter is case-sensitive\n• Returns all orders (COMPLETED and REFUNDED)\n• Each order lists individual coupons\n• Coupon status: VALID (active) or VOID (cancelled)\n• All coupons shown regardless of order status\n• Most recent orders appear first"
+							},
+							"response": []
+						}
+					],
+					"description": "Coupon management endpoints - view all participants and their coupons"
 				}
 			],
-			"description": "Admin-only endpoints for managing authentication, giveaways, vouchers, services, and leads"
+			"description": "Admin-only endpoints for managing authentication, giveaways, vouchers, services, leads, and coupons"
 		},
 		{
 			"name": "Public",
