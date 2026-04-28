@@ -333,6 +333,300 @@ const deleteGiveaway = async (giveawayId) => {
   }
 };
 
+/**
+ * Get giveaway details with stats and recent purchasers
+ * @param {string} giveawayId - ID of the giveaway
+ * @returns {object} Giveaway with revenue, stats, and recent purchasers
+ */
+const getGiveawayDetailsWithStats = async (giveawayId) => {
+  try {
+    const giveaway = await prisma.giveaway.findUnique({
+      where: { id: giveawayId },
+      include: {
+        packages: {
+          orderBy: { couponCount: "asc" },
+        },
+      },
+    });
+
+    if (!giveaway) {
+      throw new Error("Giveaway not found");
+    }
+
+    // Only show recent purchasers and stats for ACTIVE giveaways
+    let recentPurchasers = [];
+    let totalRevenue = 0;
+    let totalSales = 0;
+    let totalEmails = 0;
+    let salesProgress = 0;
+
+    if (giveaway.status === "ACTIVE") {
+      // Get total revenue (sum of COMPLETED orders)
+      const revenueData = await prisma.order.aggregate({
+        where: {
+          giveawayId,
+          status: "COMPLETED",
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      });
+      totalRevenue = parseFloat(revenueData._sum.totalAmount || 0);
+
+      // Get total sales count (COMPLETED orders)
+      totalSales = await prisma.order.count({
+        where: {
+          giveawayId,
+          status: "COMPLETED",
+        },
+      });
+
+      // Get unique email count from COMPLETED orders
+      const emailEntries = await prisma.order.findMany({
+        where: {
+          giveawayId,
+          status: "COMPLETED",
+        },
+        select: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+      const uniqueEmails = new Set(emailEntries.map((order) => order.user.email));
+      totalEmails = uniqueEmails.size;
+
+      // Get recent 3 purchasers (COMPLETED orders only)
+      const recent = await prisma.order.findMany({
+        where: {
+          giveawayId,
+          status: "COMPLETED",
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+              fullName: true,
+              instagramUsername: true,
+            },
+          },
+          coupons: {
+            select: {
+              couponCode: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 3,
+      });
+
+      recentPurchasers = recent.map((order) => ({
+        fullName: order.user.fullName,
+        email: order.user.email,
+        instagram: order.user.instagramUsername,
+        ticketRange: order.coupons.map((c) => c.couponCode),
+        purchaseDate: order.createdAt,
+      }));
+
+      // Calculate sales progress percentage
+      salesProgress = giveaway.totalTickets > 0 ? Math.round((totalSales / giveaway.totalTickets) * 100) : 0;
+    }
+
+    // Calculate daily average sales (days since giveaway created)
+    const now = new Date();
+    const createdDate = new Date(giveaway.createdAt);
+    const daysSinceCreation = Math.max(1, Math.floor((now - createdDate) / (1000 * 60 * 60 * 24)));
+    const dailyAverageSales = totalSales > 0 ? parseFloat((totalSales / daysSinceCreation).toFixed(2)) : 0;
+
+    // Calculate conversion rate (percentage of tickets sold)
+    const conversionRate = giveaway.totalTickets > 0 ? parseFloat(((totalSales / giveaway.totalTickets) * 100).toFixed(1)) : 0;
+
+    return {
+      ...giveaway,
+      stats: {
+        totalRevenue,
+        totalSales,
+        totalTickets: giveaway.totalTickets,
+        salesProgress,
+        totalEmails,
+        dailyAverageSales,
+        conversionRate,
+      },
+      recentPurchasers: giveaway.status === "ACTIVE" ? recentPurchasers : [],
+    };
+  } catch (error) {
+    throw new Error(`Failed to fetch giveaway details: ${error.message}`);
+  }
+};
+
+/**
+ * Draw random winner from valid coupons
+ * @param {string} giveawayId - ID of the giveaway
+ * @returns {object} Updated giveaway with winner info
+ */
+const drawRandomWinner = async (giveawayId) => {
+  try {
+    // Get all valid coupons for this giveaway
+    const validCoupons = await prisma.coupon.findMany({
+      where: {
+        giveawayId,
+        status: "VALID",
+      },
+      include: {
+        order: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (validCoupons.length === 0) {
+      throw new Error("No valid coupons available for this giveaway");
+    }
+
+    // Randomly select a winner
+    const randomIndex = Math.floor(Math.random() * validCoupons.length);
+    const winnerCoupon = validCoupons[randomIndex];
+
+    // Update giveaway with winner
+    const updatedGiveaway = await prisma.giveaway.update({
+      where: { id: giveawayId },
+      data: {
+        winnerCouponId: winnerCoupon.id,
+        status: "COMPLETED",
+      },
+      include: {
+        winnerCoupon: {
+          include: {
+            order: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    fullName: true,
+                    email: true,
+                    instagramUsername: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        packages: {
+          orderBy: { couponCount: "asc" },
+        },
+      },
+    });
+
+    return {
+      giveaway: updatedGiveaway,
+      winner: {
+        couponCode: winnerCoupon.couponCode,
+        fullName: winnerCoupon.order.user.fullName,
+        email: winnerCoupon.order.user.email,
+        instagram: winnerCoupon.order.user.instagramUsername,
+      },
+    };
+  } catch (error) {
+    throw new Error(`Failed to draw winner: ${error.message}`);
+  }
+};
+
+/**
+ * Manually select winner by coupon code
+ * @param {string} giveawayId - ID of the giveaway
+ * @param {string} couponCode - Coupon code of the winner
+ * @returns {object} Updated giveaway with winner info
+ */
+const selectWinnerManually = async (giveawayId, couponCode) => {
+  try {
+    // Find the coupon
+    const coupon = await prisma.coupon.findUnique({
+      where: { couponCode },
+      include: {
+        order: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                instagramUsername: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!coupon) {
+      throw new Error("Coupon not found");
+    }
+
+    // Verify coupon belongs to this giveaway
+    if (coupon.giveawayId !== giveawayId) {
+      throw new Error("Coupon does not belong to this giveaway");
+    }
+
+    // Check if coupon is valid
+    if (coupon.status !== "VALID") {
+      throw new Error("Coupon is not valid");
+    }
+
+    // Update giveaway with winner
+    const updatedGiveaway = await prisma.giveaway.update({
+      where: { id: giveawayId },
+      data: {
+        winnerCouponId: coupon.id,
+        status: "COMPLETED",
+      },
+      include: {
+        winnerCoupon: {
+          include: {
+            order: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    fullName: true,
+                    email: true,
+                    instagramUsername: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        packages: {
+          orderBy: { couponCount: "asc" },
+        },
+      },
+    });
+
+    return {
+      giveaway: updatedGiveaway,
+      winner: {
+        couponCode: coupon.couponCode,
+        fullName: coupon.order.user.fullName,
+        email: coupon.order.user.email,
+        instagram: coupon.order.user.instagramUsername,
+      },
+    };
+  } catch (error) {
+    throw new Error(`Failed to select winner: ${error.message}`);
+  }
+};
+
 module.exports = {
   getBasePricePerTicket,
   calculateSavePercentage,
@@ -343,4 +637,7 @@ module.exports = {
   getAllGiveaways,
   getGiveawayById,
   deleteGiveaway,
+  getGiveawayDetailsWithStats,
+  drawRandomWinner,
+  selectWinnerManually,
 };

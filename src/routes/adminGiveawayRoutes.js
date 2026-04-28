@@ -45,6 +45,23 @@ router.get("/:giveawayId", giveawayController.getGiveawayById);
 router.put("/:giveawayId", upload.single("bannerImage"), giveawayController.updateGiveaway);
 
 /**
+ * GET /api/admin/giveaways/:giveawayId/draw-winner
+ * Draw a random winner from valid coupons
+ * Sets giveaway status to COMPLETED and selects winner
+ * Required admin authentication
+ */
+router.get("/:giveawayId/draw-winner", giveawayController.drawWinner);
+
+/**
+ * POST /api/admin/giveaways/:giveawayId/select-winner
+ * Manually select winner by coupon code
+ * Body: { couponCode: string }
+ * Sets giveaway status to COMPLETED
+ * Required admin authentication
+ */
+router.post("/:giveawayId/select-winner", giveawayController.selectWinner);
+
+/**
  * DELETE /api/admin/giveaways/:giveawayId
  * Delete a giveaway and all its packages
  * Required admin authentication

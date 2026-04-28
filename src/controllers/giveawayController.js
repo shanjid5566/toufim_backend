@@ -133,7 +133,8 @@ const createGiveaway = async (req, res) => {
 
 /**
  * Get all giveaways (admin view)
- * GET /api/admin/giveaways?page=1&limit=10
+ * GET /api/admin/giveaways?page=1&limit=10&status=ACTIVE
+ * When status=ACTIVE, includes stats and recent purchasers
  */
 const getAllGiveaways = async (req, res) => {
   try {
@@ -153,9 +154,20 @@ const getAllGiveaways = async (req, res) => {
       status
     );
 
+    // For ACTIVE giveaways, enrich with stats and recent purchasers
+    let enrichedData = result.data;
+    if (status === "ACTIVE") {
+      enrichedData = await Promise.all(
+        result.data.map(async (giveaway) => {
+          const detailed = await giveawayService.getGiveawayDetailsWithStats(giveaway.id);
+          return detailed;
+        })
+      );
+    }
+
     res.status(200).json({
       message: "Giveaways retrieved successfully",
-      data: result.data,
+      data: enrichedData,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -170,12 +182,13 @@ const getAllGiveaways = async (req, res) => {
 /**
  * Get a specific giveaway by ID (admin view)
  * GET /api/admin/giveaways/:giveawayId
+ * Returns giveaway with stats and recent purchasers if ACTIVE
  */
 const getGiveawayById = async (req, res) => {
   try {
     const { giveawayId } = req.params;
 
-    const giveaway = await giveawayService.getGiveawayById(giveawayId);
+    const giveaway = await giveawayService.getGiveawayDetailsWithStats(giveawayId);
 
     res.status(200).json({
       message: "Giveaway retrieved successfully",
@@ -358,10 +371,114 @@ const deleteGiveaway = async (req, res) => {
   }
 };
 
+/**
+ * Draw random winner
+ * GET /api/admin/giveaways/:giveawayId/draw-winner
+ * Randomly selects a winner from valid coupons
+ */
+const drawWinner = async (req, res) => {
+  try {
+    const { giveawayId } = req.params;
+
+    const result = await giveawayService.drawRandomWinner(giveawayId);
+
+    res.status(200).json({
+      success: true,
+      message: "Winner drawn successfully",
+      data: {
+        giveaway: result.giveaway,
+        winner: result.winner,
+      },
+    });
+  } catch (error) {
+    console.error("Error drawing winner:", error);
+
+    if (error.message.includes("not found")) {
+      return res.status(404).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    if (error.message.includes("No valid coupons")) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to draw winner",
+    });
+  }
+};
+
+/**
+ * Manually select winner by coupon code
+ * POST /api/admin/giveaways/:giveawayId/select-winner
+ * Body: { couponCode: string }
+ * Manually selects winner by coupon code
+ */
+const selectWinner = async (req, res) => {
+  try {
+    const { giveawayId } = req.params;
+    const { couponCode } = req.body;
+
+    if (!couponCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Coupon code is required",
+      });
+    }
+
+    const result = await giveawayService.selectWinnerManually(giveawayId, couponCode);
+
+    res.status(200).json({
+      success: true,
+      message: "Winner selected successfully",
+      data: {
+        giveaway: result.giveaway,
+        winner: result.winner,
+      },
+    });
+  } catch (error) {
+    console.error("Error selecting winner:", error);
+
+    if (error.message.includes("Coupon not found")) {
+      return res.status(404).json({
+        success: false,
+        error: "Coupon not found",
+      });
+    }
+
+    if (error.message.includes("does not belong to this giveaway")) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    if (error.message.includes("not valid")) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to select winner",
+    });
+  }
+};
+
 module.exports = {
   createGiveaway,
   getAllGiveaways,
   getGiveawayById,
   updateGiveaway,
   deleteGiveaway,
+  drawWinner,
+  selectWinner,
 };

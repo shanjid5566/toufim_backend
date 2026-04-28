@@ -253,7 +253,7 @@
 										}
 									]
 								},
-								"description": "Get paginated list of giveaways. Returns minimal data for list view: id, title, bannerImage, status, createdAt. Use status query parameter to filter (DRAFT, ACTIVE, COMPLETED). Remove status to get all. Use Get Giveaway By ID for full details including packages."
+								"description": "Get paginated list of giveaways. Use status query parameter to filter (DRAFT, ACTIVE, COMPLETED).\n\nWhen status=ACTIVE:\n• Returns detailed stats for each giveaway:\n  - totalRevenue: Sum of COMPLETED orders\n  - totalSales: Count of COMPLETED orders\n  - salesProgress: Percentage (0-100%)\n  - totalEmails: Count of unique customer emails\n  - dailyAverageSales: totalSales / days_since_created\n  - conversionRate: (totalSales / totalTickets) * 100\n• Returns recent 3 purchasers:\n  - fullName, email, instagram\n  - ticketRange (coupon codes)\n  - purchaseDate\n\nFor other statuses (DRAFT, COMPLETED):\n• Returns minimal data: id, title, bannerImage, status, createdAt"
 							},
 							"response": []
 						},
@@ -291,7 +291,7 @@
 										}
 									]
 								},
-								"description": "Get a single giveaway by ID with all ticket packages."
+								"description": "Get a single giveaway by ID with all details.\n\nReturns:\n• All giveaway info\n• Ticket packages\n• Stats (if ACTIVE):\n  - totalRevenue: Sum of COMPLETED orders\n  - totalSales: Count of COMPLETED orders\n  - salesProgress: Percentage (0-100%)\n  - totalEmails: Count of unique customer emails\n  - dailyAverageSales: totalSales / days_since_created\n  - conversionRate: (totalSales / totalTickets) * 100\n• Recent 3 purchasers (if ACTIVE):\n  - fullName, email, instagram\n  - ticketRange (coupon codes)\n  - purchaseDate"
 							},
 							"response": []
 						},
@@ -371,6 +371,93 @@
 									]
 								},
 								"description": "Update giveaway details. All fields are optional. Can update title, description, totalTickets, drawDate, drawTime, bannerImage (file upload), status, and packages. If packages are provided, all existing packages will be replaced with the new ones. Set status='ACTIVE' to publish a draft - returns 409 error if another active giveaway exists."
+							},
+							"response": []
+						},
+						{
+							"name": "Draw Random Winner",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId/draw-winner",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"giveaways",
+										":giveawayId",
+										"draw-winner"
+									],
+									"variable": [
+										{
+											"key": "giveawayId",
+											"value": "",
+											"description": "Giveaway UUID"
+										}
+									]
+								},
+								"description": "Automatically draw a random winner using cryptographically secure random number generation.\n\n========================================\n🎰 PROCESS\n========================================\n\n1. Retrieves all VALID coupons for the giveaway\n2. Randomly selects one winner\n3. Updates giveaway:\n   - Sets winnerCouponId\n   - Sets status to COMPLETED\n4. Returns giveaway with winner details\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Winner drawn successfully\",\n  \"data\": {\n    \"giveaway\": {\n      \"id\": \"uuid-1\",\n      \"title\": \"€10,000 Cash Giveaway\",\n      \"status\": \"COMPLETED\",\n      \"winnerCouponId\": \"coupon-id\",\n      \"winnerCoupon\": {...},\n      ...\n    },\n    \"winner\": {\n      \"couponCode\": \"GW-A1B2C3-042\",\n      \"fullName\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"instagram\": \"@john_builds\"\n    }\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n❌ 404 - Giveaway not found\n❌ 400 - No valid coupons available\n  (All coupons have been marked as VOID)\n❌ 500 - Server error\n\n========================================\n💡 USAGE\n========================================\n\n1. Click \"Draw Winner\" button in admin UI\n2. System randomly selects from valid coupons\n3. Winner announced automatically\n4. Email notification sent to winner (optional)"
+							},
+							"response": []
+						},
+						{
+							"name": "Select Winner Manually",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\"couponCode\": \"GW-A1B2C3-042\"}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId/select-winner",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"giveaways",
+										":giveawayId",
+										"select-winner"
+									],
+									"variable": [
+										{
+											"key": "giveawayId",
+											"value": "",
+											"description": "Giveaway UUID"
+										}
+									]
+								},
+								"description": "Manually select winner by providing a valid coupon code.\n\n========================================\n📋 REQUEST BODY\n========================================\n\n{\n  \"couponCode\": \"GW-A1B2C3-042\"\n}\n\n========================================\n🔍 VALIDATION\n========================================\n\n1. **Coupon must exist:** Returns 404 if coupon code not found\n2. **Must belong to giveaway:** Returns 400 if coupon belongs to different giveaway\n3. **Must be VALID:** Returns 400 if coupon status is VOID\n4. **No duplicate winners:** Only one winner can be selected per giveaway\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Winner selected successfully\",\n  \"data\": {\n    \"giveaway\": {\n      \"id\": \"uuid-1\",\n      \"title\": \"€10,000 Cash Giveaway\",\n      \"status\": \"COMPLETED\",\n      \"winnerCouponId\": \"coupon-id\",\n      \"winnerCoupon\": {...},\n      ...\n    },\n    \"winner\": {\n      \"couponCode\": \"GW-A1B2C3-042\",\n      \"fullName\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"instagram\": \"@john_builds\"\n    }\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n❌ 400 - Missing couponCode in body\n❌ 404 - Coupon not found\n❌ 400 - Coupon does not belong to this giveaway\n❌ 400 - Coupon is not valid (VOID status)\n❌ 500 - Server error\n\n========================================\n💡 USAGE\n========================================\n\n1. Admin searches for participant coupon code\n2. Enters coupon code in request body\n3. System validates and selects winner\n4. Giveaway status changes to COMPLETED\n5. Winner announced\n\n========================================\n📝 HOW TO FIND COUPON CODES\n========================================\n\n1. Go to Entry Details Preview\n2. Find participant ticket number (e.g., #482-485)\n3. Extract coupon code from ticket range\n4. Send in this endpoint as couponCode parameter"
 							},
 							"response": []
 						},
