@@ -3,16 +3,36 @@ const prisma = require("../lib/prisma");
 /**
  * Get all coupons grouped by participant (email)
  * Returns unique participants with their coupon summary
+ * @param {Object} filters - Optional filters (startDate, endDate, status)
  * @returns {Promise<Array>} Array of participants with coupon data
  */
-const getAllCouponsGroupedByParticipant = async () => {
+const getAllCouponsGroupedByParticipant = async (filters = {}) => {
+  const { startDate, endDate, status } = filters;
+
+  // Build where clause
+  const whereClause = {
+    status: {
+      in: status ? [status] : ["COMPLETED", "REFUNDED"],
+    },
+  };
+
+  // Add date range filter if provided
+  if (startDate || endDate) {
+    whereClause.createdAt = {};
+    if (startDate) {
+      whereClause.createdAt.gte = new Date(startDate);
+    }
+    if (endDate) {
+      // Include the entire end date (until 23:59:59)
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      whereClause.createdAt.lte = endDateTime;
+    }
+  }
+
   // Get all orders with coupons
   const orders = await prisma.order.findMany({
-    where: {
-      status: {
-        in: ["COMPLETED", "REFUNDED"],
-      },
-    },
+    where: whereClause,
     include: {
       user: true,
       giveaway: true,

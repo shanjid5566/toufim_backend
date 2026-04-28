@@ -2,11 +2,19 @@ const couponService = require("../services/couponService");
 
 /**
  * ADMIN: Get all coupons grouped by participant
- * GET /api/admin/coupons
+ * GET /api/admin/coupons?startDate=2023-10-01&endDate=2023-10-31&status=COMPLETED
  */
 const getAllCoupons = async (req, res) => {
   try {
-    const participants = await couponService.getAllCouponsGroupedByParticipant();
+    const { startDate, endDate, status } = req.query;
+
+    // Build filters object
+    const filters = {};
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    if (status) filters.status = status;
+
+    const participants = await couponService.getAllCouponsGroupedByParticipant(filters);
 
     res.status(200).json({
       success: true,
@@ -14,6 +22,11 @@ const getAllCoupons = async (req, res) => {
       data: {
         totalParticipants: participants.length,
         participants,
+        filters: {
+          startDate: startDate || null,
+          endDate: endDate || null,
+          status: status || "All",
+        },
       },
     });
   } catch (error) {
