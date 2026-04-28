@@ -1180,6 +1180,37 @@
 							"response": []
 						},
 						{
+							"name": "Export Leads",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/leads/export",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"leads",
+										"export"
+									]
+								},
+								"description": "Export all leads to Excel file (Admin only).\n\n========================================\n📥 EXPORT LEADS TO EXCEL\n========================================\n\nDownloads all leads from the database as an Excel (.xlsx) file.\n\n✅ FEATURES:\n• Exports all leads in one Excel file\n• Includes all lead information (name, email, phone, service, address, etc.)\n• Formatted columns with proper widths\n• Automatic filename: leads-export-YYYY-MM-DD.xlsx\n• Ready to open in Microsoft Excel, Google Sheets, LibreOffice\n\n========================================\n📊 EXPORTED COLUMNS\n========================================\n\nThe Excel file contains these columns (in order):\n\n1. # - Row number (for easy reference)\n2. Full Name - Customer full name\n3. Email - Customer email address\n4. Phone - Customer phone number\n5. Service Type - Service requested (English)\n6. Address - Project address\n7. Project Details - Project description\n8. Date Received - Date when lead was received (YYYY-MM-DD)\n9. Status - Current lead status (PENDING, CONTACTED, QUOTED, COMPLETED, CLOSED)\n10. Created At - Lead creation timestamp\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\nReturns Excel file as download:\n• Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n• Content-Disposition: attachment; filename=\"leads-export-2026-04-28.xlsx\"\n• File downloads automatically in browser/Postman\n\nIn Postman:\n1. Click \"Send\"\n2. File downloads to your Downloads folder\n3. Open with Excel/Sheets\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n404 - No leads found:\n{\n  \"success\": false,\n  \"error\": \"No leads found to export\"\n}\n\n500 - Export failed:\n{\n  \"success\": false,\n  \"error\": \"Failed to export leads\"\n}\n\n========================================\n💡 USE CASES\n========================================\n\n1. **Backup:** Regular backups of all lead data\n2. **Reporting:** Share leads with team/management\n3. **Analysis:** Analyze leads in Excel (pivot tables, charts)\n4. **Migration:** Move data to another system\n5. **Offline Access:** Work with leads offline\n\n========================================\n📝 EXCEL FILE EXAMPLE\n========================================\n\n| # | Full Name    | Email           | Phone        | Service Type | Status    |\n|---|--------------|-----------------|--------------|--------------|----------|\n| 1 | John Smith   | john@example.nl | +31612345678 | PLUMBING     | PENDING  |\n| 2 | Sarah Johnson| sarah@example.nl| +31687654321 | ROOFING      | CONTACTED|\n| 3 | Mike Ross    | mike@example.nl | +31698765432 | ELECTRICAL   | QUOTED   |\n\n========================================\n🔄 WORKFLOW\n========================================\n\n1. Admin clicks \"Export Leads\" button\n   ↓\n2. GET /api/admin/leads/export\n   ↓\n3. Backend fetches all leads from database\n   ↓\n4. Converts to Excel format (.xlsx)\n   ↓\n5. Returns file for download\n   ↓\n6. Admin opens file in Excel\n   ↓\n7. Admin can analyze, share, or backup data\n\n========================================\n⚠️ IMPORTANT NOTES\n========================================\n\n• Exports ALL leads (no pagination)\n• Large databases may take a few seconds\n• File size depends on number of leads\n• Reference images NOT included (URLs only)\n• Service types shown in English (database format)\n• Timestamps in local time format"
+							},
+							"response": []
+						},
+						{
 							"name": "Delete Lead",
 							"request": {
 								"auth": {

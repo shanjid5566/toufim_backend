@@ -283,6 +283,78 @@ const uploadLeadsCSV = async (req, res) => {
   }
 };
 
+/**
+ * ADMIN: Export all leads to Excel
+ * GET /api/admin/leads/export
+ */
+const exportLeads = async (req, res) => {
+  try {
+    // Fetch all leads from database
+    const leads = await leadService.getAllLeads({});
+
+    if (!leads || leads.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "No leads found to export",
+      });
+    }
+
+    // Prepare data for Excel export
+    const exportData = leads.map((lead, index) => ({
+      "#": index + 1,
+      "Full Name": lead.fullName,
+      "Email": lead.email,
+      "Phone": lead.phone,
+      "Service Type": lead.serviceType,
+      "Address": lead.address,
+      "Project Details": lead.projectDetails || "",
+      "Date Received": new Date(lead.createdAt).toISOString().split('T')[0], // YYYY-MM-DD
+      "Status": lead.status,
+      "Created At": new Date(lead.createdAt).toLocaleString('en-GB'),
+    }));
+
+    // Create workbook and worksheet
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(exportData);
+
+    // Set column widths for better readability
+    worksheet['!cols'] = [
+      { wch: 5 },  // #
+      { wch: 20 }, // Full Name
+      { wch: 25 }, // Email
+      { wch: 15 }, // Phone
+      { wch: 25 }, // Service Type
+      { wch: 35 }, // Address
+      { wch: 40 }, // Project Details
+      { wch: 15 }, // Date Received
+      { wch: 12 }, // Status
+      { wch: 20 }, // Created At
+    ];
+
+    // Add worksheet to workbook
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Leads');
+
+    // Generate buffer
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Generate filename with current date
+    const filename = `leads-export-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Set headers for file download
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // Send file
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error exporting leads:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to export leads",
+    });
+  }
+};
+
 module.exports = {
   submitContactForm,
   getAllLeads,
@@ -290,4 +362,5 @@ module.exports = {
   updateLeadStatus,
   deleteLead,
   uploadLeadsCSV,
+  exportLeads,
 };

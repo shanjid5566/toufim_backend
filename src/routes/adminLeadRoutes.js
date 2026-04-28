@@ -43,6 +43,9 @@ const uploadCSV = multer({
 // Upload leads from CSV
 router.post("/upload-csv", adminAuthMiddleware, uploadCSV.single("file"), leadController.uploadLeadsCSV);
 
+// Export all leads to Excel
+router.get("/export", adminAuthMiddleware, leadController.exportLeads);
+
 // Get all leads (with optional status filter)
 router.get("/", adminAuthMiddleware, leadController.getAllLeads);
 
