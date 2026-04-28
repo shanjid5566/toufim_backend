@@ -1371,6 +1371,106 @@
 					"description": "Lead management endpoints - view, update status, and delete contact form submissions"
 				},
 				{
+					"name": "dashboard",
+					"item": [
+						{
+							"name": "Get Dashboard Overview",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/dashboard",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"dashboard"
+									]
+								},
+								"description": "Get dashboard overview data including total leads, active giveaways, revenue, and recent quote requests.\n\n========================================\n📊 RETURNS\n========================================\n\n• **totalLeads:** Total number of leads in the system\n• **leadsThisMonth:** Count of leads created this month\n• **activeGiveaways:** Count of giveaways with ACTIVE status\n• **totalTicketsSold:** Total tickets sold across all giveaways\n• **revenueThisMonth:** Total revenue from completed orders this month (in euros)\n• **recentLeads:** Array of 5 most recent leads with Dutch status names\n  - id, fullName, serviceType, status, createdAt\n\n========================================\n✅ EXAMPLE RESPONSE\n========================================\n\n{\n  \"success\": true,\n  \"data\": {\n    \"totalLeads\": 1284,\n    \"leadsThisMonth\": 152,\n    \"activeGiveaways\": 1,\n    \"totalTicketsSold\": 842,\n    \"revenueThisMonth\": \"45200.00\",\n    \"recentLeads\": [\n      {\n        \"id\": \"uuid\",\n        \"fullName\": \"Jane Smith\",\n        \"serviceType\": \"Kitchen Remodel\",\n        \"status\": \"In afwachting\",\n        \"createdAt\": \"2026-04-28T10:30:00Z\"\n      }\n    ]\n  }\n}"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Active Giveaways",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/dashboard/giveaways/active",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"dashboard",
+										"giveaways",
+										"active"
+									]
+								},
+								"description": "Get only active giveaways with ticket packages and progress information.\n\n========================================\n📊 RETURNS\n========================================\n\nArray of active giveaways containing:\n• id, title, description\n• totalTickets, ticketsSold\n• drawDate, bannerImage\n• packages (array): id, title, couponCount, price\n\n========================================\n✅ EXAMPLE RESPONSE\n========================================\n\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"title\": \"Bathroom Renovation Giveaway\",\n      \"description\": \"Win a complete luxury master bathroom remodel worth €15,000\",\n      \"totalTickets\": 1000,\n      \"ticketsSold\": 842,\n      \"drawDate\": \"2026-05-10T00:00:00Z\",\n      \"bannerImage\": \"/uploads/giveaway-123.jpg\",\n      \"packages\": [\n        {\n          \"id\": \"pkg-uuid\",\n          \"title\": \"1 Ticket\",\n          \"couponCount\": 1,\n          \"price\": \"50.00\"\n        }\n      ]\n    }\n  ]\n}"
+							},
+							"response": []
+						},
+						{
+							"name": "Export Quote Requests (CSV)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/dashboard/leads/export",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"dashboard",
+										"leads",
+										"export"
+									]
+								},
+								"description": "Export all quote requests/leads to Excel format with Dutch column headers.\n\n========================================\n📋 EXPORT FORMAT\n========================================\n\nExcel file (.xlsx) with columns:\n• # (row number)\n• Volledige Naam (Full Name)\n• E-mailadres (Email)\n• Telefoonnummer (Phone)\n• Diensttype (Service Type)\n• Adres (Address)\n• Projectdetails (Project Details)\n• Datum Ontvangen (Date Received) - in DD-MM-YYYY format\n• Status (in Dutch - In afwachting, Gecontacteerd, etc.)\n• Aangemaakt op (Created Date/Time) - in DD-MM-YYYY HH:MM:SS format\n\n========================================\n✅ RESPONSE\n========================================\n\n• Downloads as: offerteverzoeken_YYYY-MM-DD.xlsx\n• Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n• File contains all leads sorted by creation date (newest first)\n\n========================================\n💡 USAGE\n========================================\n\n• Click Send to download the Excel file automatically\n• Use for reporting and data analysis\n• All labels and statuses are in Dutch"
+							},
+							"response": []
+						}
+					],
+					"description": "Admin dashboard endpoints - overview statistics, active giveaways, and lead export"
+				},
+				{
 					"name": "coupons",
 					"item": [
 						{

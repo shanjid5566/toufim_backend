@@ -3,6 +3,7 @@ const path = require("path");
 
 // Import routes
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
+const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
 const adminGiveawayRoutes = require("./routes/adminGiveawayRoutes");
 const adminVoucherRoutes = require("./routes/adminVoucherRoutes");
 const adminServiceRoutes = require("./routes/adminServiceRoutes");
@@ -45,6 +46,9 @@ app.get("/health", (req, res) => {
 
 // Admin Authentication routes (public: login, register)
 app.use("/api/admin/auth", adminAuthRoutes);
+
+// Admin Dashboard routes (protected: requires JWT token)
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 // Public Voucher routes (no authentication required)
 app.use("/api/vouchers", publicVoucherRoutes);
