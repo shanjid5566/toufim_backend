@@ -1009,9 +1009,177 @@
 						}
 					],
 					"description": "Service management endpoints - create, read, update, delete services with banner and gallery images"
+				},
+				{
+					"name": "leads",
+					"item": [
+						{
+							"name": "Get All Leads",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/leads?status=PENDING",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"leads"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "PENDING",
+											"description": "Filter by status: PENDING, CONTACTED, COMPLETED, QUOTED, CLOSED (optional)",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Get all leads with optional status filter (Admin only).\n\n========================================\n🔍 QUERY PARAMETERS (All Optional)\n========================================\n\nstatus - Filter leads by status. Valid values:\n  • PENDING - New leads not yet contacted\n  • CONTACTED - Leads that have been contacted\n  • QUOTED - Leads with quote sent\n  • COMPLETED - Completed work\n  • CLOSED - Closed leads (won't proceed)\n\nExample:\n  GET /api/admin/leads?status=PENDING\n  GET /api/admin/leads?status=CONTACTED\n  GET /api/admin/leads  (no filter, returns all)\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"fullName\": \"Jan de Vries\",\n      \"email\": \"jan@example.nl\",\n      \"phone\": \"+31612345678\",\n      \"serviceType\": \"Dakdekkersdiensten\",  // Dutch name\n      \"address\": \"Kouwstraat 121, Amsterdam\",\n      \"projectDetails\": \"Project description...\",\n      \"referenceImages\": [\n        \"http://localhost:3000/uploads/lead-123.jpg\"\n      ],\n      \"status\": \"PENDING\",\n      \"createdAt\": \"2026-04-28T10:30:00.000Z\",\n      \"updatedAt\": \"2026-04-28T10:30:00.000Z\"\n    }\n  ]\n}\n\n========================================\n📋 RESPONSE DETAILS\n========================================\n\n• Ordered by creation date (newest first)\n• serviceType returned in Dutch (e.g., 'Dakdekkersdiensten')\n• referenceImages are absolute URLs\n• Empty array [] if no leads found\n\n========================================\n📊 STATUS VALUES REFERENCE\n========================================\n\nPENDING → New lead, awaiting contact\nCONTACTED → First contact made\nQUOTED → Quote/estimate sent\nCOMPLETED → Work finished successfully\nCLOSED → Lead closed (declined/not interested)\n\n========================================\n💡 FRONTEND USAGE\n========================================\n\n• Use for lead dashboard/list view\n• Filter by status to show different tabs\n• Display newest leads first\n• Show status with color coding"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Lead By ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/leads/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"leads",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Lead UUID"
+										}
+									]
+								},
+								"description": "Get a single lead by ID with complete details.\n\nURL PARAMETERS:\n:id - Lead UUID\n\nRETURNS:\n• Complete lead object with all fields\n• ServiceType in Dutch\n• Reference images array\n\nRESPONSE:\n✅ 200 - Lead details\n❌ 404 - Lead not found"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Lead Status",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"status\": \"CONTACTED\"\n}\n\n// Valid status values:\n// \"PENDING\"    - New lead, not yet contacted\n// \"CONTACTED\"  - First contact made\n// \"QUOTED\"     - Quote sent to customer\n// \"COMPLETED\"  - Work completed\n// \"CLOSED\"     - Lead closed (won't proceed)"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/leads/:id/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"leads",
+										":id",
+										"status"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Lead UUID"
+										}
+									]
+								},
+								"description": "Update lead status (change lead workflow state).\n\n========================================\n📋 VALID STATUS VALUES (Required)\n========================================\n\n1. PENDING\n   └─ New lead, not yet contacted\n   └─ Default status when lead is submitted\n   └─ Use this when lead needs follow-up\n\n2. CONTACTED\n   └─ First contact made with customer\n   └─ Initial call/email sent\n   └─ Customer is aware of the lead\n\n3. QUOTED\n   └─ Quote/estimate sent to customer\n   └─ Pricing provided\n   └─ Waiting for customer decision\n\n4. COMPLETED\n   └─ Work completed successfully\n   └─ Customer satisfied\n   └─ Project finished\n\n5. CLOSED\n   └─ Lead closed without work\n   └─ Customer declined or not interested\n   └─ Won't proceed with this lead\n\n========================================\n📊 TYPICAL STATUS FLOW\n========================================\n\nPENDING → CONTACTED → QUOTED → COMPLETED\n                              ↓\n                           CLOSED\n\n========================================\n📝 REQUEST BODY (Raw JSON)\n========================================\n\n{\n  \"status\": \"CONTACTED\"  // Use exact values above\n}\n\n========================================\n🔗 URL PARAMETERS\n========================================\n\n:id - Lead UUID (required)\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Lead status updated successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"status\": \"CONTACTED\",\n    \"fullName\": \"Jan de Vries\",\n    \"email\": \"jan@example.nl\",\n    \"phone\": \"+31612345678\",\n    \"serviceType\": \"Dakdekkersdiensten\",\n    \"address\": \"Kouwstraat 121, Amsterdam\",\n    \"projectDetails\": \"...\",\n    \"referenceImages\": [\"http://...\"],\n    \"createdAt\": \"2026-04-28T...\",\n    \"updatedAt\": \"2026-04-28T...\"\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n400 - Invalid status value:\n{\n  \"success\": false,\n  \"error\": \"Ongeldige status: INVALID_STATUS\"\n}\n\n400 - Missing status:\n{\n  \"success\": false,\n  \"error\": \"Status is required\"\n}\n\n404 - Lead not found:\n{\n  \"success\": false,\n  \"error\": \"Lead not found\"\n}\n\n========================================\n💡 FRONTEND USAGE TIPS\n========================================\n\n• Use dropdown/select with exact status values\n• Show status flow visualization to users\n• Prevent invalid transitions (optional)\n• Display status with color coding:\n  - PENDING: Yellow/Orange\n  - CONTACTED: Blue\n  - QUOTED: Purple\n  - COMPLETED: Green\n  - CLOSED: Red/Gray"
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Lead",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/leads/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"leads",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "",
+											"description": "Lead UUID"
+										}
+									]
+								},
+								"description": "Delete a lead permanently.\n\nURL PARAMETERS:\n:id - Lead UUID\n\nRESPONSE:\n✅ 200 - Lead deleted successfully\n❌ 404 - Lead not found\n\nWARNING: This action is irreversible. Consider setting status to CLOSED instead."
+							},
+							"response": []
+						}
+					],
+					"description": "Lead management endpoints - view, update status, and delete contact form submissions"
 				}
 			],
-			"description": "Admin-only endpoints for managing authentication, giveaways, vouchers, and services"
+			"description": "Admin-only endpoints for managing authentication, giveaways, vouchers, services, and leads"
 		},
 		{
 			"name": "Public",
@@ -1165,6 +1333,78 @@
 						}
 					],
 					"description": "Public order endpoints - create orders, process Stripe payments, generate coupons"
+				},
+				{
+					"name": "leads",
+					"item": [
+						{
+							"name": "Submit Contact Form",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "fullName",
+											"value": "Jan de Vries",
+											"type": "text",
+											"description": "Volledige naam (required)"
+										},
+										{
+											"key": "email",
+											"value": "jan@example.nl",
+											"type": "text",
+											"description": "E-mailadres (required)"
+										},
+										{
+											"key": "phone",
+											"value": "+31612345678",
+											"type": "text",
+											"description": "Telefoonnummer (required)"
+										},
+										{
+											"key": "serviceType",
+											"value": "Dakdekkersdiensten",
+											"type": "text",
+											"description": "Type dienst in Dutch - see valid values in docs (required)"
+										},
+										{
+											"key": "address",
+											"value": "Kouwstraat 121, Suite 190, Amsterdam",
+											"type": "text",
+											"description": "Projectadres (required)"
+										},
+										{
+											"key": "projectDetails",
+											"value": "Beschrijf uw project, tijdlijn en eventuele specifieke voorsten...",
+											"type": "text",
+											"description": "Projectdata - project description (optional)"
+										},
+										{
+											"key": "referenceImages",
+											"type": "file",
+											"src": [],
+											"description": "Upload referentiebeelden - max 5 images, 5MB each (optional)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/leads",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"leads"
+									]
+								},
+								"description": "Submit contact form for quote request (lead collection). PUBLIC - No authentication required.\n\nFORM-DATA FIELDS:\n• fullName (text) - Customer full name (required)\n• email (text) - Customer email address (required)\n• phone (text) - Customer phone number (required)\n• serviceType (text) - Service type in Dutch (required). Valid values:\n  - Loodgietersdiensten\n  - Dakdekkersdiensten\n  - Stukadoorsdienst\n  - Elektrische diensten\n  - Tegelservices\n  - Complete vloeroplossingen op één plek\n  - Schoonmaakdiensten\n  - Algemene service\n• address (text) - Project address (required)\n• projectDetails (text) - Project description and details (optional)\n• referenceImages (files) - Reference images for the project (optional, max 5 files, 5MB each)\n\nPROCESS:\n1. Frontend sends Dutch service type (e.g., 'Dakdekkersdiensten')\n2. Backend converts to English enum (e.g., 'ROOFING_SERVICES') for storage\n3. Backend returns Dutch name in response\n\nRESPONSE:\n✅ 201 - Lead submitted successfully\n• Success message in Dutch: \"Uw offerteverzoek is succesvol ingediend. We nemen binnenkort contact met u op!\"\n• Lead data with Dutch serviceType\n• Reference image URLs\n\n❌ 400 - Validation error (missing required fields or invalid service type)\n• Error messages in Dutch\n\nNOTE: This endpoint is public and does not require authentication. Lead status is automatically set to PENDING."
+							},
+							"response": []
+						}
+					],
+					"description": "Public lead/contact form endpoint - collect customer quote requests"
 				}
 			],
 			"description": "Public endpoints accessible to all users without authentication"
