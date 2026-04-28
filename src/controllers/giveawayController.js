@@ -1,4 +1,5 @@
 const giveawayService = require("../services/giveawayService");
+const prisma = require("../lib/prisma");
 
 /**
  * Create a new giveaway with ticket pricing tiers
@@ -135,6 +136,7 @@ const createGiveaway = async (req, res) => {
  * Get all giveaways (admin view)
  * GET /api/admin/giveaways?page=1&limit=10&status=ACTIVE
  * When status=ACTIVE, includes stats and recent purchasers
+ * When status=COMPLETED, includes winner details
  */
 const getAllGiveaways = async (req, res) => {
   try {
@@ -161,6 +163,51 @@ const getAllGiveaways = async (req, res) => {
         result.data.map(async (giveaway) => {
           const detailed = await giveawayService.getGiveawayDetailsWithStats(giveaway.id);
           return detailed;
+        })
+      );
+    } else if (status === "COMPLETED") {
+      // For COMPLETED giveaways, include winner details
+      enrichedData = await Promise.all(
+        result.data.map(async (giveaway) => {
+          // Fetch full giveaway with winner coupon details
+          const fullGiveaway = await giveawayService.getGiveawayById(giveaway.id);
+          
+          let winner = null;
+          if (fullGiveaway.winnerCouponId) {
+            const winnerCoupon = await prisma.coupon.findUnique({
+              where: { id: fullGiveaway.winnerCouponId },
+              include: {
+                order: {
+                  include: {
+                    user: {
+                      select: {
+                        fullName: true,
+                        email: true,
+                        instagramUsername: true,
+                      },
+                    },
+                  },
+                },
+              },
+            });
+
+            if (winnerCoupon) {
+              winner = {
+                couponCode: winnerCoupon.couponCode,
+                fullName: winnerCoupon.order.user.fullName,
+                email: winnerCoupon.order.user.email,
+                instagram: winnerCoupon.order.user.instagramUsername,
+              };
+            }
+          }
+
+          return {
+            ...giveaway,
+            winner,
+            drawDate: fullGiveaway.drawDate,
+            totalTickets: fullGiveaway.totalTickets,
+            ticketsSold: fullGiveaway.ticketsSold,
+          };
         })
       );
     }
@@ -473,6 +520,28 @@ const selectWinner = async (req, res) => {
   }
 };
 
+/**
+ * Get giveaways overview stats (dashboard summary)
+ * GET /api/admin/giveaways/stats/overview
+ * Returns: total revenue, tickets sold, active giveaways, and upcoming draws
+ */
+const getOverviewStats = async (req, res) => {
+  try {
+    const stats = await giveawayService.getGiveawaysOverviewStats();
+
+    res.status(200).json({
+      message: "Giveaways overview stats retrieved successfully",
+      data: stats,
+    });
+  } catch (error) {
+    console.error("Error fetching giveaways overview stats:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createGiveaway,
   getAllGiveaways,
@@ -481,4 +550,5 @@ module.exports = {
   deleteGiveaway,
   drawWinner,
   selectWinner,
+  getOverviewStats,
 };

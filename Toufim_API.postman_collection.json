@@ -253,7 +253,39 @@
 										}
 									]
 								},
-								"description": "Get paginated list of giveaways. Use status query parameter to filter (DRAFT, ACTIVE, COMPLETED).\n\nWhen status=ACTIVE:\n• Returns detailed stats for each giveaway:\n  - totalRevenue: Sum of COMPLETED orders\n  - totalSales: Count of COMPLETED orders\n  - salesProgress: Percentage (0-100%)\n  - totalEmails: Count of unique customer emails\n  - dailyAverageSales: totalSales / days_since_created\n  - conversionRate: (totalSales / totalTickets) * 100\n• Returns recent 3 purchasers:\n  - fullName, email, instagram\n  - ticketRange (coupon codes)\n  - purchaseDate\n\nFor other statuses (DRAFT, COMPLETED):\n• Returns minimal data: id, title, bannerImage, status, createdAt"
+								"description": "Get paginated list of giveaways. Use status query parameter to filter (DRAFT, ACTIVE, COMPLETED).\n\nWhen status=ACTIVE:\n• Returns detailed stats for each giveaway:\n  - totalRevenue: Sum of COMPLETED orders\n  - totalSales: Count of COMPLETED orders\n  - salesProgress: Percentage (0-100%)\n  - totalEmails: Count of unique customer emails\n  - dailyAverageSales: totalSales / days_since_created\n  - conversionRate: (totalSales / totalTickets) * 100\n• Returns recent 3 purchasers:\n  - fullName, email, instagram\n  - ticketRange (coupon codes)\n  - purchaseDate\n\nWhen status=COMPLETED:\n• Returns winner details:\n  - winner object: couponCode, fullName, email, instagram\n  - drawDate, totalTickets, ticketsSold\n\nFor status=DRAFT:\n• Returns minimal data: id, title, bannerImage, status, createdAt"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Giveaways Overview Stats",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/giveaways/stats/overview",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"giveaways",
+										"stats",
+										"overview"
+									]
+								},
+								"description": "Get overview statistics for the giveaways dashboard.\n\n========================================\n📊 RETURNS\n========================================\n\n• **totalRevenue:** Sum of revenue from all ACTIVE giveaways (COMPLETED orders only)\n• **totalTicketsSold:** Sum of tickets sold across all ACTIVE giveaways\n• **totalTicketsAvailable:** Sum of total available tickets across all ACTIVE giveaways\n• **activeGiveawaysCount:** Number of ACTIVE giveaways\n• **upcomingDraws:** Array of ACTIVE giveaways sorted by days remaining (closest first)\n  - id, title, drawDate, daysRemaining\n  - ticketsSold, totalTickets\n\n========================================\n✅ EXAMPLE RESPONSE\n========================================\n\n{\n  \"message\": \"Giveaways overview stats retrieved successfully\",\n  \"data\": {\n    \"totalRevenue\": 45200.50,\n    \"totalTicketsSold\": 850,\n    \"totalTicketsAvailable\": 1000,\n    \"activeGiveawaysCount\": 1,\n    \"upcomingDraws\": [\n      {\n        \"id\": \"uuid-1\",\n        \"title\": \"Bathroom Renovation Giveaway\",\n        \"drawDate\": \"2026-05-10T00:00:00Z\",\n        \"daysRemaining\": 12,\n        \"ticketsSold\": 850,\n        \"totalTickets\": 1000\n      }\n    ]\n  }\n}"
 							},
 							"response": []
 						},
@@ -387,7 +419,7 @@
 										}
 									]
 								},
-								"method": "GET",
+								"method": "POST",
 								"header": [],
 								"url": {
 									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId/draw-winner",
@@ -409,7 +441,7 @@
 										}
 									]
 								},
-								"description": "Automatically draw a random winner using cryptographically secure random number generation.\n\n========================================\n🎰 PROCESS\n========================================\n\n1. Retrieves all VALID coupons for the giveaway\n2. Randomly selects one winner\n3. Updates giveaway:\n   - Sets winnerCouponId\n   - Sets status to COMPLETED\n4. Returns giveaway with winner details\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Winner drawn successfully\",\n  \"data\": {\n    \"giveaway\": {\n      \"id\": \"uuid-1\",\n      \"title\": \"€10,000 Cash Giveaway\",\n      \"status\": \"COMPLETED\",\n      \"winnerCouponId\": \"coupon-id\",\n      \"winnerCoupon\": {...},\n      ...\n    },\n    \"winner\": {\n      \"couponCode\": \"GW-A1B2C3-042\",\n      \"fullName\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"instagram\": \"@john_builds\"\n    }\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n❌ 404 - Giveaway not found\n❌ 400 - No valid coupons available\n  (All coupons have been marked as VOID)\n❌ 500 - Server error\n\n========================================\n💡 USAGE\n========================================\n\n1. Click \"Draw Winner\" button in admin UI\n2. System randomly selects from valid coupons\n3. Winner announced automatically\n4. Email notification sent to winner (optional)"
+								"description": "🔴 WRITE OPERATION - Automatically draw a random winner and save to database.\n\nThis is a POST request because it modifies the database:\n• Randomly selects a winner from VALID coupons\n• Sets giveaway status to COMPLETED\n• Persists winnerCouponId to database\n\n========================================\n🎰 PROCESS\n========================================\n\n1. Retrieves all VALID coupons for the giveaway\n2. Randomly selects one winner (cryptographically secure)\n3. Updates giveaway in database:\n   - Sets winnerCouponId\n   - Sets status to COMPLETED\n4. Returns giveaway with winner details\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Winner drawn successfully\",\n  \"data\": {\n    \"giveaway\": {\n      \"id\": \"uuid-1\",\n      \"title\": \"€10,000 Cash Giveaway\",\n      \"status\": \"COMPLETED\",\n      \"winnerCouponId\": \"coupon-id\",\n      \"winnerCoupon\": {...},\n      ...\n    },\n    \"winner\": {\n      \"couponCode\": \"GW-A1B2C3-042\",\n      \"fullName\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"instagram\": \"@john_builds\"\n    }\n  }\n}\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n❌ 404 - Giveaway not found\n❌ 400 - No valid coupons available\n  (All coupons have been marked as VOID)\n❌ 500 - Server error\n\n========================================\n💡 USAGE\n========================================\n\n1. Admin clicks \"Draw Winner\" button\n2. System randomly selects from valid coupons\n3. Winner saved in database (winnerCouponId)\n4. Giveaway marked as COMPLETED\n5. Winner details returned to frontend"
 							},
 							"response": []
 						},

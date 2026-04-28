@@ -627,6 +627,66 @@ const selectWinnerManually = async (giveawayId, couponCode) => {
   }
 };
 
+/**
+ * Get overview stats for all giveaways (dashboard summary)
+ * @returns {object} Summary stats: total revenue, tickets, active giveaways, upcoming draws
+ */
+const getGiveawaysOverviewStats = async () => {
+  try {
+    // Get all active giveaways with their orders
+    const activeGiveaways = await prisma.giveaway.findMany({
+      where: { status: "ACTIVE" },
+      include: {
+        orders: {
+          where: { status: "COMPLETED" },
+          select: {
+            totalAmount: true,
+          },
+        },
+      },
+    });
+
+    // Calculate totals
+    let totalRevenue = 0;
+    let totalTicketsSold = 0;
+    let totalTicketsAvailable = 0;
+
+    const upcomingDraws = activeGiveaways.map((giveaway) => {
+      // Add to totals
+      totalRevenue += giveaway.orders.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
+      totalTicketsSold += giveaway.ticketsSold;
+      totalTicketsAvailable += giveaway.totalTickets;
+
+      // Calculate days remaining
+      const now = new Date();
+      const drawDate = new Date(giveaway.drawDate);
+      const daysRemaining = Math.max(0, Math.ceil((drawDate - now) / (1000 * 60 * 60 * 24)));
+
+      return {
+        id: giveaway.id,
+        title: giveaway.title,
+        drawDate: giveaway.drawDate,
+        daysRemaining,
+        ticketsSold: giveaway.ticketsSold,
+        totalTickets: giveaway.totalTickets,
+      };
+    });
+
+    // Sort by days remaining (closest draw first)
+    upcomingDraws.sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+    return {
+      totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+      totalTicketsSold,
+      totalTicketsAvailable,
+      activeGiveawaysCount: activeGiveaways.length,
+      upcomingDraws,
+    };
+  } catch (error) {
+    throw new Error(`Failed to fetch giveaways overview stats: ${error.message}`);
+  }
+};
+
 module.exports = {
   getBasePricePerTicket,
   calculateSavePercentage,
@@ -640,4 +700,5 @@ module.exports = {
   getGiveawayDetailsWithStats,
   drawRandomWinner,
   selectWinnerManually,
+  getGiveawaysOverviewStats,
 };

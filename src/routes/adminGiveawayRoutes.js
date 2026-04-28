@@ -30,6 +30,13 @@ router.post("/", upload.single("bannerImage"), giveawayController.createGiveaway
 router.get("/", giveawayController.getAllGiveaways);
 
 /**
+ * GET /api/admin/giveaways/stats/overview
+ * Get overview stats for dashboard (total revenue, tickets, active giveaways, upcoming draws)
+ * Required admin authentication
+ */
+router.get("/stats/overview", giveawayController.getOverviewStats);
+
+/**
  * GET /api/admin/giveaways/:giveawayId
  * Get a specific giveaway with all its packages
  * Required admin authentication
@@ -45,12 +52,12 @@ router.get("/:giveawayId", giveawayController.getGiveawayById);
 router.put("/:giveawayId", upload.single("bannerImage"), giveawayController.updateGiveaway);
 
 /**
- * GET /api/admin/giveaways/:giveawayId/draw-winner
+ * POST /api/admin/giveaways/:giveawayId/draw-winner
  * Draw a random winner from valid coupons
  * Sets giveaway status to COMPLETED and selects winner
  * Required admin authentication
  */
-router.get("/:giveawayId/draw-winner", giveawayController.drawWinner);
+router.post("/:giveawayId/draw-winner", giveawayController.drawWinner);
 
 /**
  * POST /api/admin/giveaways/:giveawayId/select-winner
