@@ -1,4 +1,8 @@
 const leadService = require("../services/leadService");
+const fs = require("fs");
+const csvParser = require("csv-parser");
+const xlsx = require("xlsx");
+const path = require("path");
 
 /**
  * Convert relative image URLs to absolute URLs
@@ -197,10 +201,93 @@ const deleteLead = async (req, res) => {
   }
 };
 
+/**
+ * ADMIN: Upload leads from CSV file
+ * POST /api/admin/leads/upload-csv
+ */
+const uploadLeadsCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "No file uploaded. Please upload a CSV or XLSX file.",
+      });
+    }
+
+    const csvData = [];
+    const filePath = req.file.path;
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
+
+    // Parse file based on extension
+    if (fileExtension === ".xlsx") {
+      // Parse XLSX file
+      const workbook = xlsx.readFile(filePath);
+      const sheetName = workbook.SheetNames[0]; // Use first sheet
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = xlsx.utils.sheet_to_json(worksheet);
+      
+      csvData.push(...jsonData);
+    } else {
+      // Parse CSV file
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csvParser())
+          .on("data", (row) => {
+            csvData.push(row);
+          })
+          .on("end", () => {
+            resolve();
+          })
+          .on("error", (error) => {
+            reject(error);
+          });
+      });
+    }
+
+    // Delete uploaded file after parsing
+    fs.unlinkSync(filePath);
+
+    if (csvData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "File is empty or invalid format",
+      });
+    }
+
+    // Process leads
+    const results = await leadService.bulkCreateLeads(csvData);
+
+    res.status(200).json({
+      success: true,
+      message: `Upload completed. ${results.successful.length} leads created, ${results.failed.length} failed.`,
+      data: {
+        totalProcessed: results.totalProcessed,
+        successCount: results.successful.length,
+        failureCount: results.failed.length,
+        successful: results.successful,
+        failed: results.failed,
+      },
+    });
+  } catch (error) {
+    console.error("Error uploading CSV:", error);
+
+    // Clean up file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to process file. Please check the file format.",
+    });
+  }
+};
+
 module.exports = {
   submitContactForm,
   getAllLeads,
   getLeadById,
   updateLeadStatus,
   deleteLead,
+  uploadLeadsCSV,
 };
