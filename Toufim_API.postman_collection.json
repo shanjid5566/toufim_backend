@@ -1569,6 +1569,51 @@
 						}
 					],
 					"description": "Public lead/contact form endpoint - collect customer quote requests"
+				},
+				{
+					"name": "Public - Services",
+					"item": [
+						{
+							"name": "Get All Services",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/services",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"services"
+									]
+								},
+								"description": "Get all active services for display on the frontend. PUBLIC - No authentication required.\n\n========================================\n📋 RESPONSE STRUCTURE\n========================================\n\nReturns all ACTIVE services with:\n• Service details (name, description, basePrice)\n• Category name in Dutch\n• Absolute image URLs (ready to display)\n• Service slug for routing\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Services retrieved successfully\",\n  \"data\": {\n    \"totalServices\": 8,\n    \"services\": [\n      {\n        \"id\": \"uuid-1\",\n        \"name\": \"Complete Loodgieterservices\",\n        \"slug\": \"complete-loodgieterservices\",\n        \"description\": \"Van leidinglekken tot volledige badkamerinstallaties, wij bieden complete loodgieteroplossingen voor zowel woningen als commerciële panden. Wij houden ons ook bezig met het lekdichte maken van leidingen, rioolinstallatie en verzorgen afwerking.\",\n        \"basePrice\": 150.00,\n        \"category\": \"Loodgietersdiensten\",\n        \"bannerImage\": \"http://localhost:3000/uploads/plumbing-banner.jpg\",\n        \"galleryImages\": [\n          \"http://localhost:3000/uploads/plumbing-1.jpg\",\n          \"http://localhost:3000/uploads/plumbing-2.jpg\",\n          \"http://localhost:3000/uploads/plumbing-3.jpg\"\n        ],\n        \"createdAt\": \"2026-04-15T10:00:00Z\"\n      },\n      {\n        \"id\": \"uuid-2\",\n        \"name\": \"Professionele Dakdekkersdiensten\",\n        \"slug\": \"professionele-dakdekkersdiensten\",\n        \"description\": \"Wij zijn gespecialiseerd in complete dakoplossingen, inclusief zowel platte als hellende daken, dakreparaties, dakbedekking en zinken afwerking. Van lekdetectie tot volledige dakvernieuwing.\",\n        \"basePrice\": 200.00,\n        \"category\": \"Dakdekkersdiensten\",\n        \"bannerImage\": \"http://localhost:3000/uploads/roofing-banner.jpg\",\n        \"galleryImages\": [\n          \"http://localhost:3000/uploads/roofing-1.jpg\",\n          \"http://localhost:3000/uploads/roofing-2.jpg\"\n        ],\n        \"createdAt\": \"2026-04-15T10:05:00Z\"\n      }\n    ]\n  }\n}\n\n========================================\n💡 USE CASES\n========================================\n\n1. **Services Page:**\n   - Display all services in a grid\n   - Show service cards with banner images\n   - Link to individual service detail pages\n\n2. **Contact Form:**\n   - Populate service type dropdown\n   - Use Dutch category names for display\n\n3. **Homepage:**\n   - Feature top services\n   - Show service categories\n\n========================================\n🎯 FRONTEND IMPLEMENTATION\n========================================\n\nDisplay as service cards (as shown in your reference image):\n\n```javascript\nconst fetchServices = async () => {\n  const response = await fetch('/api/services');\n  const { data } = await response.json();\n  \n  return data.services; // Array of service objects\n};\n\n// Render service card\nservices.forEach(service => {\n  console.log(service.name); // \"Complete Loodgieterservices\"\n  console.log(service.category); // \"Loodgietersdiensten\" (Dutch)\n  console.log(service.bannerImage); // Full absolute URL\n  console.log(service.basePrice); // 150.00\n});\n```\n\n========================================\n⚠️ IMPORTANT NOTES\n========================================\n\n• Only returns ACTIVE services (not DRAFT or COMPLETED)\n• Category names are in Dutch (frontend-ready)\n• All image URLs are absolute (ready to display)\n• Services sorted by creation date (newest first)\n• No pagination (all services returned)\n• Public endpoint (no authentication required)"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Service by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/services/550e8400-e29b-41d4-a716-446655440000",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"services",
+										"550e8400-e29b-41d4-a716-446655440000"
+									]
+								},
+								"description": "Get individual service details by ID. PUBLIC - No authentication required.\n\n========================================\n🔍 URL PARAMETER\n========================================\n\n• **id** (required)\n  - Service UUID\n  - Example: \"550e8400-e29b-41d4-a716-446655440000\"\n  - Get the ID from the \"Get All Services\" endpoint\n\n========================================\n📋 RESPONSE STRUCTURE\n========================================\n\nReturns single service with:\n• Complete service details\n• Category name in Dutch\n• Absolute image URLs\n• All gallery images\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Service retrieved successfully\",\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"name\": \"Complete Loodgieterservices\",\n    \"slug\": \"complete-loodgieterservices\",\n    \"description\": \"Van leidinglekken tot volledige badkamerinstallaties, wij bieden complete loodgieteroplossingen voor zowel woningen als commerciële panden. Wij houden ons ook bezig met het lekdichte maken van leidingen, rioolinstallatie en verzorgen afwerking.\",\n    \"basePrice\": 150.00,\n    \"category\": \"Loodgietersdiensten\",\n    \"bannerImage\": \"http://localhost:3000/uploads/plumbing-banner.jpg\",\n    \"galleryImages\": [\n      \"http://localhost:3000/uploads/plumbing-1.jpg\",\n      \"http://localhost:3000/uploads/plumbing-2.jpg\",\n      \"http://localhost:3000/uploads/plumbing-3.jpg\"\n    ],\n    \"createdAt\": \"2026-04-15T10:00:00Z\"\n  }\n}\n\n========================================\n❌ ERROR RESPONSE (404)\n========================================\n\n{\n  \"success\": false,\n  \"error\": \"Service not found\"\n}\n\nReturned when:\n• Service with ID does not exist\n• Service exists but status is not ACTIVE\n\n========================================\n💡 USE CASES\n========================================\n\n1. **Service Detail Page:**\n   - Display full service information\n   - Show banner and gallery images\n   - Display pricing and description\n   - Show \"Request Quote\" button\n\n2. **Service Cards:**\n   - Click on service card to view details\n   - Pass service ID from \"Get All Services\" response\n\n========================================\n🎯 FRONTEND IMPLEMENTATION\n========================================\n\nService detail page:\n\n```javascript\nconst fetchServiceById = async (id) => {\n  const response = await fetch(`/api/services/${id}`);\n  \n  if (!response.ok) {\n    // Service not found\n    return null;\n  }\n  \n  const { data } = await response.json();\n  return data; // Service object\n};\n\n// Example usage in React\nconst ServiceDetailPage = ({ serviceId }) => {\n  const [service, setService] = useState(null);\n  \n  useEffect(() => {\n    fetchServiceById(serviceId).then(setService);\n  }, [serviceId]);\n  \n  if (!service) return <NotFound />;\n  \n  return (\n    <div>\n      <h1>{service.name}</h1>\n      <img src={service.bannerImage} alt={service.name} />\n      <p>{service.description}</p>\n      <p>Vanaf €{service.basePrice}</p>\n      \n      <div className=\"gallery\">\n        {service.galleryImages.map(img => (\n          <img key={img} src={img} alt=\"Gallery\" />\n        ))}\n      </div>\n      \n      <button onClick={() => openQuoteForm(service.category)}>\n        Offerte aanvragen\n      </button>\n    </div>\n  );\n};\n\n// Click handler from service card\nconst handleServiceClick = (serviceId) => {\n  navigate(`/services/${serviceId}`);\n};\n```\n\n========================================\n⚠️ IMPORTANT NOTES\n========================================\n\n• Only returns ACTIVE services (not DRAFT or COMPLETED)\n• Returns 404 for non-existent or inactive services\n• Category name is in Dutch (frontend-ready)\n• All image URLs are absolute (ready to display)\n• Use service ID from \"Get All Services\" endpoint\n• Public endpoint (no authentication required)"
+							},
+							"response": []
+						}
+					],
+					"description": "Public service endpoints - display services on frontend"
 				}
 			],
 			"description": "Public endpoints accessible to all users without authentication"

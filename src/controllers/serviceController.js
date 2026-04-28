@@ -326,6 +326,101 @@ const removeGalleryImages = async (req, res) => {
   }
 };
 
+/**
+ * Helper function to convert image paths to absolute URLs
+ * @param {object} service - Service object
+ * @param {object} req - Express request object
+ * @returns {object} Service with absolute image URLs
+ */
+const convertImagesToAbsoluteUrls = (service, req) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+  return {
+    ...service,
+    bannerImage: service.bannerImage ? `${baseUrl}${service.bannerImage}` : null,
+    galleryImages: service.galleryImages.map((image) => `${baseUrl}${image}`),
+  };
+};
+
+/**
+ * PUBLIC: Get all active services
+ * GET /api/services
+ * Returns only ACTIVE services with Dutch categories and absolute image URLs
+ */
+const getPublicServices = async (req, res) => {
+  try {
+    // Get only active services without pagination
+    const result = await serviceService.getAllServices(1, 1000, undefined, "ACTIVE");
+
+    // Convert categories to Dutch and images to absolute URLs
+    const servicesWithDutch = servicesWithDutchCategories(result.services);
+    const servicesWithAbsoluteUrls = servicesWithDutch.map((service) =>
+      convertImagesToAbsoluteUrls(service, req)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Services retrieved successfully",
+      data: {
+        totalServices: servicesWithAbsoluteUrls.length,
+        services: servicesWithAbsoluteUrls,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching public services:", error);
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve services",
+    });
+  }
+};
+
+/**
+ * PUBLIC: Get single service by ID
+ * GET /api/services/:id
+ * Returns service details with Dutch category and absolute image URLs
+ */
+const getPublicServiceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const service = await serviceService.getServiceById(id);
+
+    // Only return ACTIVE services to public
+    if (service.status !== "ACTIVE") {
+      return res.status(404).json({
+        success: false,
+        error: "Service not found",
+      });
+    }
+
+    // Convert category to Dutch and images to absolute URLs
+    const serviceWithDutch = serviceWithDutchCategory(service);
+    const serviceWithAbsoluteUrls = convertImagesToAbsoluteUrls(serviceWithDutch, req);
+
+    res.status(200).json({
+      success: true,
+      message: "Service retrieved successfully",
+      data: serviceWithAbsoluteUrls,
+    });
+  } catch (error) {
+    console.error("Error fetching public service:", error);
+
+    if (error.message === "Service not found") {
+      return res.status(404).json({
+        success: false,
+        error: "Service not found",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve service",
+    });
+  }
+};
+
 module.exports = {
   createService,
   getAllServices,
@@ -333,4 +428,6 @@ module.exports = {
   updateService,
   deleteService,
   removeGalleryImages,
+  getPublicServices,
+  getPublicServiceById,
 };

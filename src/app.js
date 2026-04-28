@@ -12,6 +12,7 @@ const publicVoucherRoutes = require("./routes/publicVoucherRoutes");
 const publicGiveawayRoutes = require("./routes/publicGiveawayRoutes");
 const publicOrderRoutes = require("./routes/publicOrderRoutes");
 const publicLeadRoutes = require("./routes/publicLeadRoutes");
+const publicServiceRoutes = require("./routes/publicServiceRoutes");
 
 // Initialize Express app
 const app = express();
@@ -56,6 +57,9 @@ app.use("/api/orders", publicOrderRoutes);
 
 // Public Lead/Contact routes (no authentication required, lead submission)
 app.use("/api/leads", publicLeadRoutes);
+
+// Public Service routes (no authentication required, get all services)
+app.use("/api/services", publicServiceRoutes);
 
 // Admin Giveaway routes (protected: requires JWT token)
 app.use("/api/admin/giveaways", adminGiveawayRoutes);
