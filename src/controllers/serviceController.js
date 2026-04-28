@@ -88,10 +88,11 @@ const createService = async (req, res) => {
 
     // Convert category back to Dutch for response
     const serviceWithDutch = serviceWithDutchCategory(service);
+    const serviceWithAbsoluteUrls = convertImagesToAbsoluteUrls(serviceWithDutch, req);
 
     res.status(201).json({
       message: "Service succesvol aangemaakt",
-      data: serviceWithDutch,
+      data: serviceWithAbsoluteUrls,
     });
   } catch (error) {
     console.error("Error creating service:", error);
@@ -123,10 +124,13 @@ const getAllServices = async (req, res) => {
 
     // Convert categories back to Dutch for response
     const servicesWithDutch = servicesWithDutchCategories(result.services);
+    const servicesWithAbsoluteUrls = servicesWithDutch.map((service) =>
+      convertImagesToAbsoluteUrls(service, req)
+    );
 
     res.status(200).json({
       message: "Services succesvol opgehaald",
-      services: servicesWithDutch,
+      services: servicesWithAbsoluteUrls,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -151,10 +155,11 @@ const getServiceById = async (req, res) => {
 
     // Convert category to Dutch for response
     const serviceWithDutch = serviceWithDutchCategory(service);
+    const serviceWithAbsoluteUrls = convertImagesToAbsoluteUrls(serviceWithDutch, req);
 
     res.status(200).json({
       message: "Service succesvol opgehaald",
-      data: serviceWithDutch,
+      data: serviceWithAbsoluteUrls,
     });
   } catch (error) {
     console.error("Error fetching service:", error);
@@ -234,10 +239,11 @@ const updateService = async (req, res) => {
 
     // Convert category back to Dutch for response
     const serviceWithDutch = serviceWithDutchCategory(service);
+    const serviceWithAbsoluteUrls = convertImagesToAbsoluteUrls(serviceWithDutch, req);
 
     res.status(200).json({
       message: "Service succesvol bijgewerkt",
-      data: serviceWithDutch,
+      data: serviceWithAbsoluteUrls,
     });
   } catch (error) {
     console.error("Error updating service:", error);
