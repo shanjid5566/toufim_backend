@@ -158,8 +158,8 @@ const createOrder = async (orderData) => {
       },
     ],
     mode: "payment",
-    success_url: `${process.env.FRONTEND_URL || "http://localhost:3001"}/order/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-    cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3001"}/order/cancel?order_id=${order.id}`,
+    success_url: `${process.env.FRONTEND_URL}/order/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+    cancel_url: `${process.env.FRONTEND_URL}/order/cancel?order_id=${order.id}`,
     metadata: {
       orderId: order.id,
       packageId: packageId,

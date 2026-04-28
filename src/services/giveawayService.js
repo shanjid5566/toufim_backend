@@ -317,17 +317,40 @@ const getGiveawayById = async (giveawayId) => {
  */
 const deleteGiveaway = async (giveawayId) => {
   try {
-    // First delete all packages
+    // First, check if giveaway exists and is not ACTIVE
+    const giveaway = await prisma.giveaway.findUnique({
+      where: { id: giveawayId },
+    });
+
+    if (!giveaway) {
+      throw new Error("Giveaway not found");
+    }
+
+    if (giveaway.status === "ACTIVE") {
+      throw new Error("Cannot delete an active giveaway. Please change its status to DRAFT or COMPLETED first.");
+    }
+
+    // Step 1: Delete all coupons associated with this giveaway
+    await prisma.coupon.deleteMany({
+      where: { giveawayId },
+    });
+
+    // Step 2: Delete all orders associated with this giveaway
+    await prisma.order.deleteMany({
+      where: { giveawayId },
+    });
+
+    // Step 3: Delete all packages
     await prisma.ticketPackage.deleteMany({
       where: { giveawayId },
     });
 
-    // Then delete the giveaway
-    const giveaway = await prisma.giveaway.delete({
+    // Step 4: Delete the giveaway
+    const deletedGiveaway = await prisma.giveaway.delete({
       where: { id: giveawayId },
     });
 
-    return giveaway;
+    return deletedGiveaway;
   } catch (error) {
     throw new Error(`Failed to delete giveaway: ${error.message}`);
   }
