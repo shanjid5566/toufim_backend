@@ -29,6 +29,14 @@ router.post("/", upload.none(), voucherController.createVoucher);
 router.get("/", voucherController.getAllVouchers);
 
 /**
+ * GET /api/admin/vouchers/overview
+ * Get voucher overview statistics (dashboard metrics)
+ * Returns: Total discounts applied, active vouchers, etc.
+ * Required admin authentication
+ */
+router.get("/overview", voucherController.getVoucherOverview);
+
+/**
  * GET /api/admin/vouchers/:voucherId
  * Get a specific voucher with usage details
  * Required admin authentication

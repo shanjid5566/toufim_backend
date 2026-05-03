@@ -164,7 +164,78 @@ const getCouponsByParticipantEmail = async (email) => {
   return participant;
 };
 
+/**
+ * Get coupon overview/statistics for admin dashboard
+ * @returns {Promise<Object>} Overview stats including total coupons, participants, revenue, etc.
+ */
+const getCouponOverview = async () => {
+  try {
+    const [
+      totalCoupons,
+      validCoupons,
+      voidCoupons,
+      uniqueParticipants,
+      completedOrders,
+      recentCoupons,
+    ] = await Promise.all([
+      // Total coupons count
+      prisma.coupon.count(),
+      // Valid coupons count
+      prisma.coupon.count({
+        where: { status: "VALID" },
+      }),
+      // Void coupons count
+      prisma.coupon.count({
+        where: { status: "VOID" },
+      }),
+      // Count unique participants (users with coupons)
+      prisma.user.count({
+        where: {
+          coupons: {
+            some: {},
+          },
+        },
+      }),
+      // Get all completed orders for revenue calculation
+      prisma.order.findMany({
+        where: { status: "COMPLETED" },
+        select: { totalAmount: true },
+      }),
+      
+    ]);
+
+    // Calculate total revenue
+    const totalRevenue = completedOrders.reduce(
+      (sum, order) => sum + Number(order.totalAmount),
+      0
+    );
+
+    // Calculate average revenue per order
+    const averageRevenuePerOrder =
+      completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
+
+    // Calculate usage rate
+    const usageRate =
+      totalCoupons > 0 ? ((totalCoupons - voidCoupons) / totalCoupons) * 100 : 0;
+
+    return {
+      totalCoupons,
+      validCoupons,
+      voidCoupons,
+      usageRate: Math.round(usageRate * 100) / 100,
+      totalParticipants: uniqueParticipants,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      averageRevenuePerOrder: Math.round(averageRevenuePerOrder * 100) / 100,
+      completedOrders: completedOrders.length,
+      recentCoupons,
+    };
+  } catch (error) {
+    throw new Error(`Failed to get coupon overview: ${error.message}`);
+  }
+};
+
 module.exports = {
   getAllCouponsGroupedByParticipant,
   getCouponsByParticipantEmail,
+  getCouponOverview,
 };

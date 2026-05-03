@@ -5,6 +5,9 @@ const adminAuthMiddleware = require("../middleware/adminAuth");
 
 // All routes are protected with admin authentication
 
+// Get coupon overview/statistics
+router.get("/overview", adminAuthMiddleware, couponController.getCouponOverview);
+
 // Get all coupons grouped by participant
 router.get("/", adminAuthMiddleware, couponController.getAllCoupons);
 

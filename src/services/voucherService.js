@@ -441,6 +441,70 @@ const autoExpireVouchers = async () => {
   }
 };
 
+/**
+ * Get voucher overview statistics (dashboard metrics)
+ * @returns {object} Overview stats including total discounts, active vouchers, etc.
+ */
+const getVoucherOverview = async () => {
+  try {
+    const [
+      activeVouchersCount,
+      totalVouchersCount,
+      ordersWithVouchers,
+      allVouchers,
+    ] = await Promise.all([
+      // Count active vouchers
+      prisma.voucher.count({
+        where: { status: "ACTIVE" },
+      }),
+      // Count total vouchers
+      prisma.voucher.count(),
+      // Get all orders with vouchers to calculate total discounts
+      prisma.order.findMany({
+        where: {
+          voucherId: { not: null },
+        },
+        include: {
+          package: {
+            select: { price: true },
+          },
+          voucher: {
+            select: { code: true },
+          },
+        },
+      }),
+      
+    ]);
+
+    // Calculate total discounts applied
+    let totalDiscountsApplied = 0;
+    ordersWithVouchers.forEach((order) => {
+      const originalPrice = order.package.price;
+      const discountAmount = originalPrice - order.totalAmount;
+      if (discountAmount > 0) {
+        totalDiscountsApplied += Number(discountAmount);
+      }
+    });
+
+    // Calculate average discount per order
+    const averageDiscountPerOrder =
+      ordersWithVouchers.length > 0
+        ? totalDiscountsApplied / ordersWithVouchers.length
+        : 0;
+
+    return {
+      totalDiscountsApplied: Math.round(totalDiscountsApplied * 100) / 100,
+      activeVouchers: activeVouchersCount,
+      totalVouchers: totalVouchersCount,
+      ordersUsingVouchers: ordersWithVouchers.length,
+      averageDiscountPerOrder: Math.round(averageDiscountPerOrder * 100) / 100,
+      topActiveVouchers: allVouchers,
+    };
+  } catch (error) {
+    throw new Error(`Failed to get voucher overview: ${error.message}`);
+  }
+};
+
 module.exports = {
   createVoucher,
   getAllVouchers,
@@ -451,4 +515,5 @@ module.exports = {
   incrementVoucherUsage,
   decrementVoucherUsage,
   autoExpireVouchers,
+  getVoucherOverview,
 };

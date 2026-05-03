@@ -650,6 +650,37 @@
 							"response": []
 						},
 						{
+							"name": "Get Voucher Overview",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/vouchers/overview",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"vouchers",
+										"overview"
+									]
+								},
+								"description": "Get voucher overview/statistics for the admin dashboard.\n\n========================================\n📊 RETURNS\n========================================\n\n• **totalDiscountsApplied:** Sum of all discount amounts from orders that used vouchers (calculated from: package.price - order.totalAmount)\n• **activeVouchers:** Count of vouchers with ACTIVE status\n• **totalVouchers:** Count of all vouchers (DRAFT, ACTIVE, EXPIRED)\n• **ordersUsingVouchers:** Count of orders that applied vouchers\n• **averageDiscountPerOrder:** Average discount amount per order\n• **topActiveVouchers:** Last 5 recent active vouchers with usage details (id, code, discountType, discountValue, usedCount, usageLimit, expirationDate, order count)\n\n========================================\n✅ EXAMPLE RESPONSE\n========================================\n\n{\n  \"message\": \"Voucher overview retrieved successfully\",\n  \"data\": {\n    \"totalDiscountsApplied\": 12450.00,\n    \"activeVouchers\": 18,\n    \"totalVouchers\": 24,\n    \"ordersUsingVouchers\": 156,\n    \"averageDiscountPerOrder\": 79.81,\n    \"topActiveVouchers\": [\n      {\n        \"id\": \"uuid-1\",\n        \"code\": \"SAVE20\",\n        \"discountType\": \"PERCENTAGE\",\n        \"discountValue\": \"20\",\n        \"usedCount\": 45,\n        \"usageLimit\": 100,\n        \"expirationDate\": \"2026-12-31T00:00:00Z\",\n        \"_count\": {\n          \"orders\": 45\n        }\n      }\n    ]\n  }\n}\n\n========================================\n💡 USE CASE\n========================================\nUse this endpoint to populate dashboard cards:\n- \"Total Discounts Applied\" card: Use totalDiscountsApplied\n- \"Active Vouchers\" card: Use activeVouchers\n- Display top performing vouchers in a table"
+							},
+							"response": []
+						},
+						{
 							"name": "Get Voucher By ID",
 							"request": {
 								"auth": {
@@ -1473,6 +1504,37 @@
 				{
 					"name": "coupons",
 					"item": [
+						{
+							"name": "Get Coupon Overview",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/coupons/overview",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"coupons",
+										"overview"
+									]
+								},
+								"description": "Get coupon overview/statistics for admin dashboard.\n\n========================================\n📊 RETURNS\n========================================\n\n• **totalCoupons:** Total number of coupons generated\n• **validCoupons:** Count of coupons with VALID status (not used/cancelled)\n• **voidCoupons:** Count of coupons with VOID status (cancelled/used)\n• **usageRate:** Percentage of coupons that have been used (0-100%)\n• **totalParticipants:** Count of unique users who purchased coupons\n• **totalRevenue:** Sum of all completed order amounts (€)\n• **averageRevenuePerOrder:** Average revenue per completed order (€)\n• **completedOrders:** Count of COMPLETED (paid) orders\n• **recentCoupons:** Last 5 generated coupons with details (code, status, user, giveaway)\n\n========================================\n✅ EXAMPLE RESPONSE\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Coupon overview retrieved successfully\",\n  \"data\": {\n    \"totalCoupons\": 850,\n    \"validCoupons\": 750,\n    \"voidCoupons\": 100,\n    \"usageRate\": 88.24,\n    \"totalParticipants\": 642,\n    \"totalRevenue\": 42500.00,\n    \"averageRevenuePerOrder\": 315.43,\n    \"completedOrders\": 135,\n    \"recentCoupons\": [\n      {\n        \"id\": \"coupon-uuid-1\",\n        \"couponCode\": \"GW-A1B2C3-001\",\n        \"status\": \"VALID\",\n        \"createdAt\": \"2026-05-03T10:15:00Z\",\n        \"user\": {\n          \"fullName\": \"Marcus Wright\",\n          \"email\": \"m.wright@structura.io\"\n        },\n        \"giveaway\": {\n          \"title\": \"Bathroom Renovation Giveaway\"\n        }\n      },\n      {\n        \"id\": \"coupon-uuid-2\",\n        \"couponCode\": \"GW-D4E5F6-002\",\n        \"status\": \"VOID\",\n        \"createdAt\": \"2026-05-03T10:10:00Z\",\n        \"user\": {\n          \"fullName\": \"Sarah Lopez\",\n          \"email\": \"sarah.lopez@example.com\"\n        },\n        \"giveaway\": {\n          \"title\": \"Bathroom Renovation Giveaway\"\n        }\n      }\n    ]\n  }\n}\n\n========================================\n💡 USE CASE\n========================================\nUse this endpoint to populate dashboard cards:\n- \"Total Tickets Sold\" card: Use totalCoupons\n- \"Total Participants\" card: Use totalParticipants\n- \"Revenue Generated\" card: Use totalRevenue\n- \"Coupon Usage Rate\" card: Use usageRate\n- Display recent coupons table"
+							},
+							"response": []
+						},
 						{
 							"name": "Get All Coupons (Grouped by Participant)",
 							"request": {

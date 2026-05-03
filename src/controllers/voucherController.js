@@ -396,7 +396,27 @@ const validateVoucher = async (req, res) => {
   }
 };
 
+/**
+ * Get voucher overview/statistics (Dashboard)
+ * GET /api/admin/vouchers/overview
+ * Returns: Total discounts applied, active vouchers count, and other metrics
+ */
+const getVoucherOverview = async (req, res) => {
+  try {
+    const overview = await voucherService.getVoucherOverview();
 
+    res.status(200).json({
+      message: "Voucher overview retrieved successfully",
+      data: overview,
+    });
+  } catch (error) {
+    console.error("Error fetching voucher overview:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   createVoucher,
@@ -405,4 +425,5 @@ module.exports = {
   updateVoucher,
   deleteVoucher,
   validateVoucher,
+  getVoucherOverview,
 };

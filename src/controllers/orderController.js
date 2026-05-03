@@ -34,6 +34,7 @@ const createOrder = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "Order created successfully. Complete payment to finalize.",
       data: result,
     });
@@ -48,12 +49,14 @@ const createOrder = async (req, res) => {
       error.message.includes("voucher")
     ) {
       return res.status(400).json({
+        success: false,
         error: "Bad Request",
         message: error.message,
       });
     }
 
     res.status(500).json({
+      success: false,
       error: "Internal Server Error",
       message: "Failed to create order. Please try again.",
     });
@@ -81,6 +84,7 @@ const confirmOrder = async (req, res) => {
     const order = await orderService.confirmOrder(sessionId);
 
     res.status(200).json({
+      success: true,
       message: "Payment confirmed! Your coupons have been generated.",
       data: order,
     });
@@ -95,12 +99,14 @@ const confirmOrder = async (req, res) => {
       error.message.includes("not successful")
     ) {
       return res.status(400).json({
+        success: false,
         error: "Bad Request",
         message: error.message,
       });
     }
 
     res.status(500).json({
+      success: false,
       error: "Internal Server Error",
       message: "Failed to confirm payment. Please try again.",
     });
@@ -118,6 +124,7 @@ const getOrderById = async (req, res) => {
     const order = await orderService.getOrderById(orderId);
 
     res.status(200).json({
+      success: true,
       message: "Order retrieved successfully",
       data: order,
     });
@@ -126,12 +133,14 @@ const getOrderById = async (req, res) => {
 
     if (error.message === "Order not found") {
       return res.status(404).json({
+        success: false,
         error: "Not Found",
         message: error.message,
       });
     }
 
     res.status(500).json({
+      success: false,
       error: "Internal Server Error",
       message: "Failed to fetch order. Please try again.",
     });

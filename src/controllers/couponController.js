@@ -77,7 +77,30 @@ const getCouponsByEmail = async (req, res) => {
   }
 };
 
+/**
+ * ADMIN: Get coupon overview/statistics for dashboard
+ * GET /api/admin/coupons/overview
+ */
+const getCouponOverview = async (req, res) => {
+  try {
+    const overview = await couponService.getCouponOverview();
+
+    res.status(200).json({
+      success: true,
+      message: "Coupon overview retrieved successfully",
+      data: overview,
+    });
+  } catch (error) {
+    console.error("Error fetching coupon overview:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve coupon overview",
+    });
+  }
+};
+
 module.exports = {
   getAllCoupons,
   getCouponsByEmail,
+  getCouponOverview,
 };
