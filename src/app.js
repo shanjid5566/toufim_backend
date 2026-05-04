@@ -27,6 +27,7 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:5174",
       "http://localhost",
+      "https://toufim.mtscorporate.com"
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)
