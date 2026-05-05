@@ -188,11 +188,16 @@ const updateGiveaway = async (giveawayId, updateData, packages = null) => {
       }
     }
 
-    // If packages are provided, delete old ones and create new ones
+    // If packages are provided, update them intelligently
     if (packages && Array.isArray(packages) && packages.length > 0) {
-      // Delete existing packages
-      await prisma.ticketPackage.deleteMany({
+      // Get existing packages
+      const existingPackages = await prisma.ticketPackage.findMany({
         where: { giveawayId },
+        include: {
+          _count: {
+            select: { orders: true },
+          },
+        },
       });
 
       // Calculate base price from new packages
@@ -216,10 +221,72 @@ const updateGiveaway = async (giveawayId, updateData, packages = null) => {
         };
       });
 
-      // Add packages to update data
-      data.packages = {
-        create: packagesData,
-      };
+      // Match existing packages with new ones based on couponCount
+      const packagesToUpdate = [];
+      const packagesToCreate = [];
+      const usedExistingIds = new Set();
+
+      for (const newPkg of packagesData) {
+        // Try to find an existing package with the same couponCount
+        const existingMatch = existingPackages.find(
+          (ep) => ep.couponCount === newPkg.couponCount && !usedExistingIds.has(ep.id)
+        );
+
+        if (existingMatch) {
+          // Update existing package
+          packagesToUpdate.push({
+            id: existingMatch.id,
+            data: newPkg,
+          });
+          usedExistingIds.add(existingMatch.id);
+        } else {
+          // Create new package
+          packagesToCreate.push(newPkg);
+        }
+      }
+
+      // Find packages to delete (only those without orders)
+      const packagesToDelete = existingPackages.filter(
+        (ep) => !usedExistingIds.has(ep.id) && ep._count.orders === 0
+      );
+
+      // Packages that have orders but are not in new list - keep them but maybe warn
+      const packagesWithOrdersNotInNew = existingPackages.filter(
+        (ep) => !usedExistingIds.has(ep.id) && ep._count.orders > 0
+      );
+
+      if (packagesWithOrdersNotInNew.length > 0) {
+        // These packages have existing orders and cannot be deleted
+        // We'll keep them in the database even though they're not in the update
+        console.warn(
+          `Warning: ${packagesWithOrdersNotInNew.length} package(s) have existing orders and will be kept even though not in update list`
+        );
+      }
+
+      // Perform updates in a transaction-like manner
+      // Update existing packages
+      for (const pkgUpdate of packagesToUpdate) {
+        await prisma.ticketPackage.update({
+          where: { id: pkgUpdate.id },
+          data: pkgUpdate.data,
+        });
+      }
+
+      // Delete packages without orders
+      if (packagesToDelete.length > 0) {
+        await prisma.ticketPackage.deleteMany({
+          where: {
+            id: { in: packagesToDelete.map((p) => p.id) },
+          },
+        });
+      }
+
+      // Create new packages
+      if (packagesToCreate.length > 0) {
+        data.packages = {
+          create: packagesToCreate,
+        };
+      }
     }
 
     const giveaway = await prisma.giveaway.update({

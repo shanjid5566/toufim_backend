@@ -322,9 +322,6 @@ const getOrderById = async (orderId) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
-      package: true,
-      giveaway: true,
-      voucher: true,
       user: {
         select: {
           id: true,
@@ -334,9 +331,6 @@ const getOrderById = async (orderId) => {
           instagramUsername: true,
         },
       },
-      coupons: {
-        orderBy: { createdAt: "asc" },
-      },
     },
   });
 
@@ -344,7 +338,13 @@ const getOrderById = async (orderId) => {
     throw new Error("Order not found");
   }
 
-  return order;
+  // Add email, fullName, and amount at top level for easier access
+  return {
+    ...order,
+    email: order.user.email,
+    fullName: order.user.fullName,
+    amount: order.totalAmount,
+  };
 };
 
 module.exports = {

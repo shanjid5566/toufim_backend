@@ -132,14 +132,107 @@ const deleteLead = async (leadId) => {
 };
 
 /**
- * Normalize XLSX data to handle Excel-specific formats
- * @param {Object} row - Raw row from XLSX/CSV
- * @returns {Object} Normalized row with strings
+ * Map Dutch and English column headers to standard field names
+ * @param {Object} row - Raw row from CSV/XLSX with any headers
+ * @returns {Object} Row with standardized English field names
  */
-const normalizeRow = (row) => {
-  const normalized = {};
+const mapColumnHeaders = (row) => {
+  // Column header mapping (case-insensitive)
+  const headerMap = {
+    // Full Name
+    "volledige naam": "fullName",
+    "full name": "fullName",
+    "fullname": "fullName",
+    "name": "fullName",
+    "naam": "fullName",
+    
+    // Email
+    "e-mailadres": "email",
+    "email": "email",
+    "e-mail": "email",
+    "emailadres": "email",
+    
+    // Phone
+    "telefoonnummer": "phone",
+    "phone": "phone",
+    "telefoon": "phone",
+    "phone number": "phone",
+    
+    // Service Type
+    "diensttype": "serviceType",
+    "service type": "serviceType",
+    "servicetype": "serviceType",
+    "type": "serviceType",
+    
+    // Address
+    "adres": "address",
+    "address": "address",
+    
+    // Project Details
+    "projectdetails": "projectDetails",
+    "project details": "projectDetails",
+    "details": "projectDetails",
+    "beschrijving": "projectDetails",
+    "description": "projectDetails",
+    
+    // Date Received
+    "datum ontvangen": "dateReceived",
+    "date received": "dateReceived",
+    "datereceived": "dateReceived",
+    "datum": "dateReceived",
+    "date": "dateReceived",
+    
+    // Status
+    "status": "status",
+    
+    // Aangemaakt op (Created At)
+    "aangemaakt op": "createdAt",
+    "created at": "createdAt",
+    "aangemaakt": "createdAt",
+    "created": "createdAt",
+  };
+
+  const mapped = {};
+  const ignoredColumns = ["#", "pk", "_1", "__rownum__"]; // Columns to ignore
 
   for (const [key, value] of Object.entries(row)) {
+    // Normalize key: lowercase and trim
+    const normalizedKey = key.toLowerCase().trim();
+    
+    // Skip ignored columns (like row numbers, IDs, etc.)
+    if (ignoredColumns.includes(normalizedKey)) {
+      continue;
+    }
+    
+    // Map to standard field name or keep original
+    const mappedKey = headerMap[normalizedKey] || key;
+    
+    mapped[mappedKey] = value;
+  }
+  
+  // Log for debugging (first row only)
+  if (Object.keys(row).length > 0 && !mapped.__logged) {
+    console.log("📋 CSV Column Mapping Debug:");
+    console.log("Original columns:", Object.keys(row));
+    console.log("Mapped columns:", Object.keys(mapped));
+    mapped.__logged = true; // Prevent logging every row
+  }
+
+  return mapped;
+};
+
+/**
+ * Normalize XLSX data to handle Excel-specific formats
+ * @param {Object} row - Raw row from XLSX/CSV
+ * @returns {Object} Normalized row with strings and mapped headers
+ */
+const normalizeRow = (row) => {
+  // First map column headers to standard names
+  const mappedRow = mapColumnHeaders(row);
+  
+  const normalized = {};
+
+  for (const [key, value] of Object.entries(mappedRow)) {
     // Handle null/undefined
     if (value == null) {
       normalized[key] = "";
@@ -160,6 +253,18 @@ const normalizeRow = (row) => {
       continue;
     }
 
+    // Handle date strings in DD-MM-YYYY format (common in Dutch locale)
+    if (key === "dateReceived" && typeof value === "string" && value.match(/^\d{1,2}-\d{1,2}-\d{4}/)) {
+      const parts = value.split(/[\s,]+/)[0].split('-'); // Split by dash and take first part (date only)
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+        normalized[key] = `${year}-${month}-${day}`;
+        continue;
+      }
+    }
+
     // Convert numbers to strings (phone, etc.)
     if (typeof value === "number") {
       // Check if phone number (starts with country code)
@@ -171,7 +276,25 @@ const normalizeRow = (row) => {
       continue;
     }
 
-    // Keep strings as-is
+    // Handle strings - clean up phone numbers with Excel quotes
+    if (typeof value === "string") {
+      let cleanedValue = value;
+      
+      // If it's a phone field and starts with a quote (Excel text prefix), remove it
+      if (key === "phone" && cleanedValue.startsWith("'")) {
+        cleanedValue = cleanedValue.substring(1);
+      }
+      
+      // If phone doesn't start with +, add it (for numbers starting with country code)
+      if (key === "phone" && cleanedValue && !cleanedValue.startsWith("+") && cleanedValue.match(/^\d{10,}/)) {
+        cleanedValue = `+${cleanedValue}`;
+      }
+      
+      normalized[key] = cleanedValue;
+      continue;
+    }
+
+    // Keep other values as-is
     normalized[key] = value;
   }
 
@@ -202,17 +325,37 @@ const bulkCreateLeads = async (csvData) => {
       const { fullName, email, phone, serviceType, address } = row;
 
       if (!fullName || !email || !phone || !serviceType || !address) {
+        // Add debugging info about what fields are present
+        const presentFields = Object.keys(row).filter(k => row[k]);
+        const missingFields = [];
+        if (!fullName) missingFields.push('fullName');
+        if (!email) missingFields.push('email');
+        if (!phone) missingFields.push('phone');
+        if (!serviceType) missingFields.push('serviceType');
+        if (!address) missingFields.push('address');
+        
         throw new Error(
-          `Missing required fields. Required: Full Name, Email, Phone, Service Type, Address`
+          `Missing required fields. Required: Full Name, Email, Phone, Service Type, Address. Missing: ${missingFields.join(', ')}. Present fields: ${presentFields.join(', ')}`
         );
       }
 
-      // Convert Dutch service type to English enum
-      const englishServiceType = dutchToEnum(serviceType.trim());
+      // Convert service type to English enum (accept both English enum and Dutch names)
+      const trimmedServiceType = serviceType.trim();
+      const validEnums = ["PLUMBING_SERVICES", "ROOFING_SERVICES", "PLASTERING_SERVICE", "ELECTRICAL_SERVICES", "TILING_SERVICES", "COMPLETE_FLOORING_SOLUTIONS", "CLEANING_SERVICES", "OVERALL_SERVICE"];
+      
+      let englishServiceType;
+      
+      // Check if it's already a valid English enum
+      if (validEnums.includes(trimmedServiceType)) {
+        englishServiceType = trimmedServiceType;
+      } else {
+        // Try to convert from Dutch
+        englishServiceType = dutchToEnum(trimmedServiceType);
+      }
 
       if (!englishServiceType) {
         throw new Error(
-          `Invalid service type: "${serviceType}". Must be one of: Loodgietersdiensten, Dakdekkersdiensten, Stukadoorsdienst, Elektrische diensten, Tegelservices, Complete vloeroplossingen op één plek, Schoonmaakdiensten, Algemene service`
+          `Invalid service type: "${serviceType}". Must be one of:\nEnglish: ${validEnums.join(", ")}\nDutch: Loodgietersdiensten, Dakdekkersdiensten, Stukadoorsdienst, Elektrische diensten, Tegelservices, Complete vloeroplossingen op één plek, Schoonmaakdiensten, Algemene service`
         );
       }
 
