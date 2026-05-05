@@ -3,11 +3,11 @@ const prisma = require("../lib/prisma");
 /**
  * Get all coupons grouped by participant (email)
  * Returns unique participants with their coupon summary
- * @param {Object} filters - Optional filters (startDate, endDate, status)
+ * @param {Object} filters - Optional filters (purchaseDate, status)
  * @returns {Promise<Array>} Array of participants with coupon data
  */
 const getAllCouponsGroupedByParticipant = async (filters = {}) => {
-  const { startDate, endDate, status } = filters;
+  const { purchaseDate, status } = filters;
 
   // Build where clause
   const whereClause = {
@@ -16,18 +16,18 @@ const getAllCouponsGroupedByParticipant = async (filters = {}) => {
     },
   };
 
-  // Add date range filter if provided
-  if (startDate || endDate) {
-    whereClause.createdAt = {};
-    if (startDate) {
-      whereClause.createdAt.gte = new Date(startDate);
-    }
-    if (endDate) {
-      // Include the entire end date (until 23:59:59)
-      const endDateTime = new Date(endDate);
-      endDateTime.setHours(23, 59, 59, 999);
-      whereClause.createdAt.lte = endDateTime;
-    }
+  // Add single date filter if provided (filters by exact purchase date)
+  if (purchaseDate) {
+    const startOfDay = new Date(purchaseDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(purchaseDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    whereClause.createdAt = {
+      gte: startOfDay,
+      lte: endOfDay,
+    };
   }
 
   // Get all orders with coupons
