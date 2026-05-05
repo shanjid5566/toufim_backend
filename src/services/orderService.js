@@ -1,5 +1,6 @@
 const prisma = require("../lib/prisma");
 const stripe = require("../config/stripe");
+const { sendOrderConfirmation } = require("../config/email");
 
 /**
  * Generate unique coupon code
@@ -309,6 +310,24 @@ const confirmOrder = async (sessionId) => {
       },
     },
   });
+
+  // 6. Send order confirmation email with coupon codes
+  try {
+    await sendOrderConfirmation({
+      email: completedOrder.user.email,
+      fullName: completedOrder.user.fullName,
+      giveawayTitle: completedOrder.giveaway.title,
+      packageTitle: completedOrder.package.title,
+      totalAmount: parseFloat(completedOrder.totalAmount),
+      coupons: completedOrder.coupons,
+      orderId: completedOrder.id,
+    });
+    console.log("✅ Order confirmation email sent to:", completedOrder.user.email);
+  } catch (emailError) {
+    // Log error but don't fail the order
+    console.error("❌ Failed to send order confirmation email:", emailError.message);
+    // Order is still successful even if email fails
+  }
 
   return completedOrder;
 };
