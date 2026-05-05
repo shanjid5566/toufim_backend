@@ -69,6 +69,14 @@ router.post("/:giveawayId/draw-winner", giveawayController.drawWinner);
 router.post("/:giveawayId/select-winner", giveawayController.selectWinner);
 
 /**
+ * POST /api/admin/giveaways/:giveawayId/notify-winner
+ * Send winner notification email
+ * Sends email to the winner informing them they won
+ * Required admin authentication
+ */
+router.post("/:giveawayId/notify-winner", giveawayController.sendWinnerNotification);
+
+/**
  * DELETE /api/admin/giveaways/:giveawayId
  * Delete a giveaway and all its packages
  * Required admin authentication

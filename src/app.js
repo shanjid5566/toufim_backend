@@ -19,6 +19,7 @@ const publicServiceRoutes = require("./routes/publicServiceRoutes");
 // Initialize Express app
 const app = express();
 
+
 // CORS middleware configuration
 const corsOptions = {
   origin: function (origin, callback) {

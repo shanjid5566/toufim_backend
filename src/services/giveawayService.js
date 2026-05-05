@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const { sendWinnerNotification } = require("../config/email");
 
 /**
  * Determine base price per ticket from packages
@@ -777,6 +778,67 @@ const getGiveawaysOverviewStats = async () => {
   }
 };
 
+/**
+ * Send winner notification email
+ * @param {string} giveawayId - Giveaway ID
+ * @returns {object} Email send result with winner info
+ */
+const sendWinnerEmail = async (giveawayId) => {
+  try {
+    // Get giveaway with winner info
+    const giveaway = await prisma.giveaway.findUnique({
+      where: { id: giveawayId },
+      include: {
+        winnerCoupon: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                instagramUsername: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!giveaway) {
+      throw new Error("Giveaway not found");
+    }
+
+    if (!giveaway.winnerCouponId || !giveaway.winnerCoupon) {
+      throw new Error("No winner has been selected for this giveaway yet");
+    }
+
+    const winner = giveaway.winnerCoupon.user;
+    const winnerData = {
+      email: winner.email,
+      fullName: winner.fullName,
+      couponCode: giveaway.winnerCoupon.couponCode,
+      giveawayTitle: giveaway.title,
+    };
+
+    // Send email
+    const emailResult = await sendWinnerNotification(winnerData);
+
+    return {
+      success: true,
+      message: "Winner notification email sent successfully",
+      emailSent: true,
+      winner: {
+        fullName: winner.fullName,
+        email: winner.email,
+        couponCode: giveaway.winnerCoupon.couponCode,
+      },
+      emailResult,
+    };
+  } catch (error) {
+    throw new Error(`Failed to send winner email: ${error.message}`);
+  }
+};
+
 module.exports = {
   getBasePricePerTicket,
   calculateSavePercentage,
@@ -791,4 +853,5 @@ module.exports = {
   drawRandomWinner,
   selectWinnerManually,
   getGiveawaysOverviewStats,
+  sendWinnerEmail,
 };

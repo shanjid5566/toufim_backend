@@ -494,6 +494,45 @@
 							"response": []
 						},
 						{
+							"name": "Send Winner Notification Email",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/admin/giveaways/:giveawayId/notify-winner",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"giveaways",
+										":giveawayId",
+										"notify-winner"
+									],
+									"variable": [
+										{
+											"key": "giveawayId",
+											"value": "",
+											"description": "Giveaway UUID"
+										}
+									]
+								},
+								"description": "📧 Send winner notification email to the selected winner.\n\n========================================\n📋 OVERVIEW\n========================================\n\nSends a professional email notification to the giveaway winner informing them that they have won. This endpoint should be called AFTER a winner has been drawn/selected.\n\n========================================\n✅ SUCCESS RESPONSE (200)\n========================================\n\n{\n  \"success\": true,\n  \"message\": \"Winner notification email sent successfully\",\n  \"data\": {\n    \"success\": true,\n    \"message\": \"Winner notification email sent successfully\",\n    \"emailSent\": true,\n    \"winner\": {\n      \"fullName\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"couponCode\": \"GW-A1B2C3-042\"\n    },\n    \"emailResult\": {\n      \"success\": true,\n      \"messageId\": \"<message-id@smtp.gmail.com>\"\n    }\n  }\n}\n\n========================================\n📧 EMAIL CONTENT\n========================================\n\nThe winner receives a beautiful HTML email with:\n• Congratulations message\n• Giveaway title\n• Winning coupon code (highlighted)\n• Professional design with your brand colors\n• Instructions for claiming the prize\n\n========================================\n❌ ERROR RESPONSES\n========================================\n\n❌ 404 - Giveaway not found\n❌ 400 - No winner has been selected for this giveaway yet\n  (Must draw/select winner first)\n❌ 500 - Email sending failed (check SMTP configuration)\n❌ 500 - Server error\n\n========================================\n💡 USAGE FLOW\n========================================\n\n1. Admin draws winner (draw-winner or select-winner)\n2. Admin clicks \"Inquire\" or \"Notify Winner\" button\n3. System sends email to winner's registered email\n4. Winner receives congratulations email\n5. Winner knows they won and can claim prize\n\n========================================\n⚙️ SMTP CONFIGURATION REQUIRED\n========================================\n\nMake sure the following environment variables are set:\n\n• SMTP_HOST (e.g., smtp.gmail.com)\n• SMTP_PORT (e.g., 587)\n• SMTP_USER (your email address)\n• SMTP_PASS (app password for Gmail)\n• EMAIL_FROM_NAME (e.g., Toufim)\n\nFor Gmail, create an App Password:\nhttps://support.google.com/accounts/answer/185833\n\n========================================\n📝 NOTES\n========================================\n\n• Can be called multiple times (re-sends email)\n• Email is sent immediately\n• Winner must have valid email address\n• Check spam folder if email not received"
+							},
+							"response": []
+						},
+						{
 							"name": "Delete Giveaway",
 							"request": {
 								"auth": {

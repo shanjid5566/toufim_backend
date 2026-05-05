@@ -542,6 +542,44 @@ const getOverviewStats = async (req, res) => {
   }
 };
 
+/**
+ * Send winner notification email
+ * POST /api/admin/giveaways/:giveawayId/notify-winner
+ */
+const sendWinnerNotification = async (req, res) => {
+  try {
+    const { giveawayId } = req.params;
+
+    const result = await giveawayService.sendWinnerEmail(giveawayId);
+
+    res.status(200).json({
+      success: true,
+      message: "Winner notification email sent successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error sending winner notification:", error);
+
+    // Handle specific errors
+    if (
+      error.message.includes("not found") ||
+      error.message.includes("No winner")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Bad Request",
+        message: error.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+      message: "Failed to send winner notification email",
+    });
+  }
+};
+
 module.exports = {
   createGiveaway,
   getAllGiveaways,
@@ -551,4 +589,5 @@ module.exports = {
   drawWinner,
   selectWinner,
   getOverviewStats,
+  sendWinnerNotification,
 };
