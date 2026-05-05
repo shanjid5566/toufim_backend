@@ -89,12 +89,10 @@ const createGiveaway = async (req, res) => {
       }
     }
 
-    // Get uploaded file path if exists
+    // Get uploaded file path if exists (store relative path)
     let bannerImageUrl = null;
     if (req.file) {
-      // Generate full URL: http://localhost:3000/uploads/filename.jpg
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      bannerImageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+      bannerImageUrl = `/uploads/${req.file.filename}`;
     }
 
     const giveaway = await giveawayService.createGiveaway(
@@ -112,7 +110,7 @@ const createGiveaway = async (req, res) => {
 
     res.status(201).json({
       message: "Giveaway created successfully",
-      data: giveaway,
+      data: convertGiveawayImagesToAbsoluteUrls(giveaway, req),
     });
   } catch (error) {
     console.error("Error creating giveaway:", error);
@@ -212,9 +210,12 @@ const getAllGiveaways = async (req, res) => {
       );
     }
 
+    // Convert image paths to absolute URLs
+    const dataWithAbsoluteUrls = enrichedData.map(g => convertGiveawayImagesToAbsoluteUrls(g, req));
+
     res.status(200).json({
       message: "Giveaways retrieved successfully",
-      data: enrichedData,
+      data: dataWithAbsoluteUrls,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -239,7 +240,7 @@ const getGiveawayById = async (req, res) => {
 
     res.status(200).json({
       message: "Giveaway retrieved successfully",
-      data: giveaway,
+      data: convertGiveawayImagesToAbsoluteUrls(giveaway, req),
     });
   } catch (error) {
     console.error("Error fetching giveaway:", error);
@@ -336,12 +337,10 @@ const updateGiveaway = async (req, res) => {
       }
     }
 
-    // Get uploaded file URL if exists
+    // Get uploaded file path if exists (store relative path)
     let bannerImageUrl = undefined; // undefined means don't update this field
     if (req.file) {
-      // Generate full URL: http://localhost:3000/uploads/filename.jpg
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      bannerImageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+      bannerImageUrl = `/uploads/${req.file.filename}`;
     }
 
     const giveaway = await giveawayService.updateGiveaway(
@@ -360,7 +359,7 @@ const updateGiveaway = async (req, res) => {
 
     res.status(200).json({
       message: "Giveaway updated successfully",
-      data: giveaway,
+      data: convertGiveawayImagesToAbsoluteUrls(giveaway, req),
     });
   } catch (error) {
     console.error("Error updating giveaway:", error);
@@ -433,7 +432,7 @@ const drawWinner = async (req, res) => {
       success: true,
       message: "Winner drawn successfully",
       data: {
-        giveaway: result.giveaway,
+        giveaway: convertGiveawayImagesToAbsoluteUrls(result.giveaway, req),
         winner: result.winner,
       },
     });
@@ -485,7 +484,7 @@ const selectWinner = async (req, res) => {
       success: true,
       message: "Winner selected successfully",
       data: {
-        giveaway: result.giveaway,
+        giveaway: convertGiveawayImagesToAbsoluteUrls(result.giveaway, req),
         winner: result.winner,
       },
     });
@@ -578,6 +577,23 @@ const sendWinnerNotification = async (req, res) => {
       message: "Failed to send winner notification email",
     });
   }
+};
+
+/**
+ * Helper function to convert relative image paths to absolute URLs
+ * @param {object} giveaway - Giveaway object
+ * @param {object} req - Express request object
+ * @returns {object} Giveaway with absolute image URLs
+ */
+const convertGiveawayImagesToAbsoluteUrls = (giveaway, req) => {
+  if (!giveaway) return giveaway;
+
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+  return {
+    ...giveaway,
+    bannerImage: giveaway.bannerImage ? `${baseUrl}${giveaway.bannerImage}` : null,
+  };
 };
 
 module.exports = {
