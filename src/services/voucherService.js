@@ -312,7 +312,10 @@ const validateVoucherCode = async (code, orderAmount) => {
 
     // Check if voucher has expired
     const now = new Date();
-    if (new Date(voucher.expirationDate) < now) {
+    const expirationDate = new Date(voucher.expirationDate);
+    // Set expiration to end of day (23:59:59.999) to allow usage on expiration day
+    expirationDate.setHours(23, 59, 59, 999);
+    if (expirationDate < now) {
       throw new Error("This voucher has expired");
     }
 
